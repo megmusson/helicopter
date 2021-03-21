@@ -222,7 +222,7 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
 
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf (string, sizeof(string), "Height pc = %4d", percent);
+    usnprintf (string, sizeof(string), "Height %% = %4d", percent);
     // Update line on display.
     OLEDStringDraw (string, 0, 1);
     OLEDStringDraw("              ", 0, 2);
