@@ -285,6 +285,7 @@ main(void)
 
     uint8_t flag = 1; // 0 for percent, 1 for adc or 2 for off
 
+
     while (1)
     {
         //
@@ -299,6 +300,7 @@ main(void)
                 flag = 0;
             }
         }
+
 
         // Background task: calculate the (approximate) mean of the values in the
         // circular buffer and display it, together with the sample number.
