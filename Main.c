@@ -92,10 +92,12 @@ void
 SysTickIntHandler(void)
 {
     //
-    // Initiate a conversion
+    // Initiate a conversion and update the buttons
     //
+    updateButtons();
     ADCProcessorTrigger(ADC0_BASE, 3);
     g_ulSampCnt++;
+
 }
 
 //*****************************************************************************
@@ -223,7 +225,7 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
     usnprintf (string, sizeof(string), "Height pc = %4d", percent);
     // Update line on display.
     OLEDStringDraw (string, 0, 1);
-
+    OLEDStringDraw("              ", 0, 2);
     usnprintf (string, sizeof(string), "Sample # %5d", count);
     OLEDStringDraw (string, 0, 3);
 }
@@ -242,6 +244,7 @@ displayMeanADC(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t vol
     usnprintf (string, sizeof(string), "Mean ADC = %4d", mean);
     // Update line on display.
     OLEDStringDraw (string, 0, 1);
+    OLEDStringDraw("              ", 0, 2);
 
     usnprintf (string, sizeof(string), "Sample # %5d", count);
     OLEDStringDraw (string, 0, 3);
@@ -251,10 +254,10 @@ void
 displayOff(void)
 {
     // Blank the dispaly
-    OLEDStringDraw("", 0, 0);
-    OLEDStringDraw("", 0, 1);
-    OLEDStringDraw("", 0, 2);
-    OLEDStringDraw("", 0, 3);
+    OLEDStringDraw("                ", 0, 0);
+    OLEDStringDraw("                ", 0, 1);
+    OLEDStringDraw("                ", 0, 2);
+    OLEDStringDraw("                ", 0, 3);
 }
 
 int
@@ -283,7 +286,8 @@ main(void)
     uint16_t voltageLanded = readCircBuf(&g_inBuffer);
     uint16_t voltageMaxHeight = 0 ;
 
-    uint8_t flag = 1; // 0 for percent, 1 for adc or 2 for off
+    uint8_t flag = 0; // 0 for percent, 1 for adc or 2 for off
+
 
 
     while (1)
@@ -293,8 +297,8 @@ main(void)
 
         if (checkButton(UP) == PUSHED) {
 
-            OLEDStringDraw("PLEEBUS", 0, 0);
-            //SysCtlDelay (SysCtlClockGet() / 6);
+
+
             flag = flag + 1;
             if (flag == 3) {
                 flag = 0;
@@ -311,15 +315,17 @@ main(void)
 
         //displayMeanADC (sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
         if (flag == 0) {
-            displayAltPercent(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
-        }   else if (flag == 1) {
             displayMeanADC(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
+
+        }   else if (flag == 1) {
+            displayAltPercent(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
+
         }   else {
             displayOff();
         }
 
 
-        SysCtlDelay (SysCtlClockGet() / 6);  // Update display at ~ 2 Hz
+       SysCtlDelay (SysCtlClockGet() / 36);  // Update display at ~ 2 Hz
     }
 }
 
