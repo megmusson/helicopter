@@ -83,10 +83,8 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="ADCdemo1.c|pwmGen4.c|uartDemo.c|pwmGen3.c|OLEDTest.c|pwmGen2.c|butsTest4.c|pwmGen.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-=======
 						<entry excluding="ADCdemo2.c|ADCdemo1.c|pwmGen4.c|uartDemo.c|pwmGen3.c|OLEDTest.c|pwmGen2.c|butsTest4.c|pwmGen.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-
+						<entry excluding="init.c|ADCdemo2.c|ADCdemo1.c|pwmGen4.c|uartDemo.c|pwmGen3.c|OLEDTest.c|pwmGen2.c|butsTest4.c|pwmGen.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

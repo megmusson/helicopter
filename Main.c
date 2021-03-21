@@ -222,7 +222,7 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
 
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf (string, sizeof(string), "Height pc = %4d", percent);
+    usnprintf (string, sizeof(string), "Hgt p/c = %4d", percent);
     // Update line on display.
     OLEDStringDraw (string, 0, 1);
     OLEDStringDraw("              ", 0, 2);
@@ -231,7 +231,7 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
 }
 
 void
-displayMeanADC(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t voltageMaxHeight)
+displayMeanADC(int32_t sum, uint32_t count)
 {
     char string[17];  // 16 characters across the display
 
@@ -253,7 +253,7 @@ displayMeanADC(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t vol
 void
 displayOff(void)
 {
-    // Blank the dispaly
+    // Blank the display
     OLEDStringDraw("                ", 0, 0);
     OLEDStringDraw("                ", 0, 1);
     OLEDStringDraw("                ", 0, 2);
@@ -270,6 +270,7 @@ main(void)
     int32_t sum;
     SysCtlPeripheralReset (UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset (DOWN_BUT_PERIPH);      // DOWN button GPIO
+    SysCtlPeripheralReset(LEFT_BUT_PERIPH);     // LEFT button GPIO
     initButtons ();
     initClock ();
     initADC ();
@@ -296,15 +297,17 @@ main(void)
 
 
         if (checkButton(UP) == PUSHED) {
-
-
-
             flag = flag + 1;
             if (flag == 3) {
                 flag = 0;
             }
         }
 
+        if (checkButton(LEFT) == RELEASED) {
+            // Reset landed voltage
+            voltageLanded = readCircBuf(&g_inBuffer);
+            voltageMaxHeight = 0 ;
+        }
 
         // Background task: calculate the (approximate) mean of the values in the
         // circular buffer and display it, together with the sample number.
@@ -313,19 +316,19 @@ main(void)
             sum = sum + readCircBuf (&g_inBuffer);
 
 
-        //displayMeanADC (sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
+        // Alternate between displays
         if (flag == 0) {
-            displayMeanADC(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
+            displayAltPercent(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
 
         }   else if (flag == 1) {
-            displayAltPercent(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
+            displayMeanADC(sum, g_ulSampCnt);
 
         }   else {
             displayOff();
         }
 
 
-       SysCtlDelay (SysCtlClockGet() / 36);  // Update display at ~ 2 Hz
+       SysCtlDelay (SysCtlClockGet() / 36);  // Update display
     }
 }
 
