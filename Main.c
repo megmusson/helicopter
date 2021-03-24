@@ -223,8 +223,6 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
 
-    usnprintf (string, sizeof(string), "Hgt p/c = %4d", percent);
-
     usnprintf (string, sizeof(string), "Height %% = %4d", percent);
 
     // Update line on display.
@@ -287,38 +285,41 @@ main(void)
     // Enable interrupts to the processor.
     IntMasterEnable();
     SysCtlDelay (SysCtlClockGet() / 6);
+
     // Read the landed ADC.
     uint16_t voltageLanded = readCircBuf(&g_inBuffer);
     uint16_t voltageMaxHeight = 0 ;
 
+    // Flag to keep track of display modes
     uint8_t flag = 0; // 0 for percent, 1 for adc or 2 for off
 
 
 
     while (1)
     {
-        //
+        // Main loop
 
+        updateButtons();
+        // Background task: calculate the (approximate) mean of the values in the
+        // circular buffer and display it, together with the sample number.
+        sum = 0;
+        for (i = 0; i < BUF_SIZE; i++) {
+            sum = sum + readCircBuf (&g_inBuffer);
+        }
 
         if (checkButton(UP) == PUSHED) {
+            // Change the display mode flag
             flag = flag + 1;
             if (flag == 3) {
+                // Loop back around, only 3 modes.
                 flag = 0;
             }
         }
 
-        if (checkButton(LEFT) == RELEASED) {
+        if (checkButton(LEFT) == PUSHED) {
             // Reset landed voltage
             voltageLanded = readCircBuf(&g_inBuffer);
-            voltageMaxHeight = 0 ;
         }
-
-        // Background task: calculate the (approximate) mean of the values in the
-        // circular buffer and display it, together with the sample number.
-        sum = 0;
-        for (i = 0; i < BUF_SIZE; i++)
-            sum = sum + readCircBuf (&g_inBuffer);
-
 
         // Alternate between displays
         if (flag == 0) {
@@ -332,7 +333,7 @@ main(void)
         }
 
 
-       SysCtlDelay (SysCtlClockGet() / 36);  // Update display
+       SysCtlDelay (SysCtlClockGet() / 150);  // Update display
     }
 }
 
