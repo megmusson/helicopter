@@ -166,7 +166,7 @@ initADC (void)
     // sequence 0 has 8 programmable steps.  Since we are only doing a single
     // conversion using sequence 3 we will only configure step 0.  For more
     // on the ADC sequences and steps, refer to the LM3S1968 datasheet.
-    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH0 | ADC_CTL_IE | // CHANGE HERE FOR LAB
+    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH9 | ADC_CTL_IE | // CHANGE HERE FOR LAB+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                              ADC_CTL_END);
 
     //
@@ -288,7 +288,7 @@ main(void)
 
     // Read the landed ADC.
     uint16_t voltageLanded = readCircBuf(&g_inBuffer);
-    uint16_t voltageMaxHeight = 0 ;
+    uint16_t voltageMaxHeight = voltageLanded - 1000;
 
     // Flag to keep track of display modes
     uint8_t flag = 0; // 0 for percent, 1 for adc or 2 for off
