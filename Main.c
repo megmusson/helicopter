@@ -210,9 +210,9 @@ GPIOIntHandler(void)
 
     Value = y_in_prev>>2 + y_in_read;
 
-
+    yaw++;
     //use table to determine whether add or subtract one to yaw
-    yaw++;//yaw + yawChangeTable[Value];
+    //yaw + yawChangeTable[Value];
 
 
     y_in_prev = y_in_read;
@@ -225,16 +225,17 @@ void
 initYawGPIO (void)
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    //GPIOIntDisable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-
 
     GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-    GPIOPadConfigSet (GPIO_PORTB_BASE, PHASE_A | PHASE_B,
-                      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+
+    //GPIOPadConfigSet (GPIO_PORTB_BASE, PHASE_A | PHASE_B,
+               //       GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
 
 
-    GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_A, GPIOIntHandler); // Sets the interrupt action upon reading
-    GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_B, GPIOIntHandler);
+    //GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_A, GPIOIntHandler); // Sets the interrupt action upon reading
+    // GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_B, GPIOIntHandler);
+
+    GPIOIntRegister(GPIO_PORTB_BASE, GPIOIntHandler);
 
     GPIOIntTypeSet(GPIO_PORTB_BASE,PHASE_A | PHASE_B, GPIO_BOTH_EDGES);
     GPIOIntEnable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);//enable the interrupt on pin 0 and pin 1 on port B
