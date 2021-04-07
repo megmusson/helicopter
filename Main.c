@@ -69,6 +69,9 @@ void initialisePWM (void);
 void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 
 
+//YAW MEASUREMENT DEFINITIONS AND GLOBAL VARIABLES
+#define PHASE_A GPIO_INT_PIN_0
+#define PHASE_B GPIO_INT_PIN_1
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
 uint32_t yaw = 0;
@@ -123,6 +126,7 @@ ADCIntHandler(void)
     //
     // Clean up, clearing the interrupt
     ADCIntClear(ADC0_BASE, 3);
+
 }
 
 
@@ -193,26 +197,26 @@ initDisplay (void)
 }
 
 
-uint8_t y_in_A_prev = 0; //global variables to save previous bit states.
-uint8_t y_in_B_prev = 0;
+uint8_t y_in_prev = 0; //global variables to save previous bit states.
+
 void
 GPIOIntHandler(void)
 {
     //get values from both sensors as well as their previous values
     uint8_t Value = 0;
 
-    uint8_t y_in_read_A = GPIOPinRead(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
-    uint8_t y_in_read_B = GPIOPinRead(GPIO_PORTB_BASE, GPIO_INT_PIN_1);
+    uint8_t y_in_read= GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
 
-    Value = y_in_A_prev<<3 + y_in_B_prev<<2 + y_in_read_A<<1 + y_in_read_B;
+
+    Value = y_in_prev>>2 + y_in_read;
 
 
     //use table to determine whether add or subtract one to yaw
-    yaw = 5;//yaw + yawChangeTable[Value];
+    yaw++;//yaw + yawChangeTable[Value];
 
 
-    y_in_A_prev = y_in_read_A;
-    y_in_B_prev = y_in_read_B;
+    y_in_prev = y_in_read;
+    GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
 
 
 }
@@ -221,33 +225,20 @@ void
 initYawGPIO (void)
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
-    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
-
-    GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
-    GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_INT_PIN_0,
-                      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+    //GPIOIntDisable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
 
 
-
-    GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_INT_PIN_1);
-    GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_INT_PIN_1,
-                      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-
+    GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
+    GPIOPadConfigSet (GPIO_PORTB_BASE, PHASE_A | PHASE_B,
+                      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
 
 
-    GPIOIntClear(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
-    GPIOIntClear(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
+    GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_A, GPIOIntHandler); // Sets the interrupt action upon reading
+    GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_B, GPIOIntHandler);
 
-    GPIOIntRegisterPin(GPIO_PORTB_BASE, GPIO_INT_PIN_1, GPIOIntHandler); // Sets the interrupt action upon reading
-    GPIOIntRegisterPin(GPIO_PORTB_BASE, GPIO_INT_PIN_0, GPIOIntHandler);
+    GPIOIntTypeSet(GPIO_PORTB_BASE,PHASE_A | PHASE_B, GPIO_BOTH_EDGES);
+    GPIOIntEnable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);//enable the interrupt on pin 0 and pin 1 on port B
 
-    GPIOIntTypeSet(GPIO_PORTB_BASE,GPIO_INT_PIN_1, GPIO_BOTH_EDGES);
-    GPIOIntTypeSet(GPIO_PORTB_BASE,GPIO_INT_PIN_0, GPIO_BOTH_EDGES);
-
-
-    GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_0);//enable the interrupt on pin 0 on port B
-    GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_1);//enable the interrupt on pin 1 on port B
 }
 
 void
