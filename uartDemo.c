@@ -189,7 +189,7 @@ main(void)
 
 	while(1)
 	{
-	    // updateButtons ();       // Poll the buttons
+	    updateButtons ();       // Poll the buttons
 	    // check state of each button and display if a change is detected
         butState = checkButton (UP);
         switch (butState)

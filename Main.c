@@ -1,7 +1,5 @@
 // Main helicopter control file
 
-
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -72,8 +70,12 @@ void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 
 
 uint32_t ui32Freq = PWM_START_RATE_HZ;
-
 uint32_t ui32Duty = PWM_START_DUTY;
+uint32_t yaw = 0;
+int8_t yawChangeTable[16] =
+{ 0,1,0,-1,-1,1,0,0,1,0,0,-1,0,-1,1,0};
+
+
 
 
 
@@ -123,6 +125,7 @@ ADCIntHandler(void)
     ADCIntClear(ADC0_BASE, 3);
 }
 
+
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
 //*****************************************************************************
@@ -165,8 +168,8 @@ initADC (void)
     // 3 has only one programmable step.  Sequence 1 and 2 have 4 steps, and
     // sequence 0 has 8 programmable steps.  Since we are only doing a single
     // conversion using sequence 3 we will only configure step 0.  For more
-    // on the ADC sequences and steps, refer to the LM3S1968 datasheet.
-    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH9 | ADC_CTL_IE | // CHANGE HERE FOR LAB+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // on the ADC sequences and steps, refer to the LM3S1968 datasheet
+    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH9 | ADC_CTL_IE | // CHANGE HERE FOR LAB++++++++++++++++++++++++++++++++++++++++
                              ADC_CTL_END);
 
     //
@@ -189,6 +192,64 @@ initDisplay (void)
     OLEDInitialise ();
 }
 
+
+uint8_t y_in_A_prev = 0; //global variables to save previous bit states.
+uint8_t y_in_B_prev = 0;
+void
+GPIOIntHandler(void)
+{
+    //get values from both sensors as well as their previous values
+    uint8_t Value = 0;
+
+    uint8_t y_in_read_A = GPIOPinRead(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
+    uint8_t y_in_read_B = GPIOPinRead(GPIO_PORTB_BASE, GPIO_INT_PIN_1);
+
+    Value = y_in_read_A<<3 + y_in_read_B<<2 + y_in_A_prev<<1 + y_in_B_prev;
+
+
+    //use table to determine whether add or subtract one to yaw
+    yaw = yaw + yawChangeTable[Value];
+
+
+    y_in_A_prev = y_in_read_A;
+    y_in_B_prev = y_in_read_B;
+
+
+}
+
+void
+initYawGPIO (void)
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+
+    GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
+    GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_INT_PIN_0,
+                      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+
+
+
+    GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_INT_PIN_1);
+    GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_INT_PIN_1,
+                      GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+
+    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
+    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
+
+    GPIOIntClear(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
+    GPIOIntClear(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
+
+
+
+    GPIOIntRegisterPin(GPIO_PORTB_BASE, GPIO_INT_PIN_1, GPIOIntHandler); // Sets the interrupt action upon reading
+    GPIOIntRegisterPin(GPIO_PORTB_BASE, GPIO_INT_PIN_0, GPIOIntHandler);
+
+    GPIOIntTypeSet(GPIO_PORTB_BASE,GPIO_INT_PIN_1, GPIO_BOTH_EDGES);
+    GPIOIntTypeSet(GPIO_PORTB_BASE,GPIO_INT_PIN_0, GPIO_BOTH_EDGES);
+
+
+    GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_0);//enable the interrupt on pin 0 on port B
+    GPIOIntEnable(GPIO_PORTB_BASE, GPIO_INT_PIN_1);//enable the interrupt on pin 1 on port B
+}
 
 void
 displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)
@@ -222,14 +283,16 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
 
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-
     usnprintf (string, sizeof(string), "Height %% = %4d", percent);
-
     // Update line on display.
     OLEDStringDraw (string, 0, 1);
-    OLEDStringDraw("              ", 0, 2);
+
     usnprintf (string, sizeof(string), "Sample # %5d", count);
     OLEDStringDraw (string, 0, 3);
+
+
+    usnprintf (string, sizeof(string), "Yaw = %4d", yaw);
+    OLEDStringDraw(string, 0, 2);
 }
 
 void
@@ -267,7 +330,6 @@ main(void)
 {
 
 
-
     uint16_t i;
     int32_t sum;
     SysCtlPeripheralReset (UP_BUT_PERIPH);        // UP button GPIO
@@ -277,14 +339,20 @@ main(void)
     initClock ();
     initADC ();
     initDisplay ();
+    initYawGPIO();
 
     initCircBuf (&g_inBuffer, BUF_SIZE);
+
 
 
 
     // Enable interrupts to the processor.
     IntMasterEnable();
     SysCtlDelay (SysCtlClockGet() / 6);
+
+
+
+
 
     // Read the landed ADC.
     uint16_t voltageLanded = readCircBuf(&g_inBuffer);
