@@ -204,15 +204,16 @@ GPIOIntHandler(void)
 {
     //get values from both sensors as well as their previous values
     uint8_t Value = 0;
+    uint8_t y_in_read;
 
-    uint8_t y_in_read= GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
+    y_in_read = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
 
 
-    Value = y_in_prev>>2 + y_in_read;
+    Value = y_in_prev<<2 | y_in_read;
 
-    yaw++;
+
     //use table to determine whether add or subtract one to yaw
-    //yaw + yawChangeTable[Value];
+    yaw = yaw + yawChangeTable[Value];
 
 
     y_in_prev = y_in_read;
