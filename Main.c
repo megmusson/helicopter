@@ -72,8 +72,8 @@ void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
 uint32_t yaw = 0;
-int8_t yawChangeTable[16] =
-{ 0,1,0,-1,-1,1,0,0,1,0,0,-1,0,-1,1,0};
+int8_t yawChangeTable[16] = { 0, 1, 0,-1,-1, 1, 0, 0,
+                              1, 0, 0,-1, 0,-1, 1, 0};
 
 
 
@@ -204,11 +204,11 @@ GPIOIntHandler(void)
     uint8_t y_in_read_A = GPIOPinRead(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
     uint8_t y_in_read_B = GPIOPinRead(GPIO_PORTB_BASE, GPIO_INT_PIN_1);
 
-    Value = y_in_read_A<<3 + y_in_read_B<<2 + y_in_A_prev<<1 + y_in_B_prev;
+    Value = y_in_A_prev<<3 + y_in_B_prev<<2 + y_in_read_A<<1 + y_in_read_B;
 
 
     //use table to determine whether add or subtract one to yaw
-    yaw = yaw + yawChangeTable[Value];
+    yaw = 5;//yaw + yawChangeTable[Value];
 
 
     y_in_A_prev = y_in_read_A;
@@ -221,6 +221,8 @@ void
 initYawGPIO (void)
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
+    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
 
     GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_INT_PIN_0);
     GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_INT_PIN_0,
@@ -232,13 +234,10 @@ initYawGPIO (void)
     GPIOPadConfigSet (GPIO_PORTB_BASE, GPIO_INT_PIN_1,
                       GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
-    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
-    GPIOIntDisable(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
+
 
     GPIOIntClear(GPIO_PORTB_BASE,GPIO_INT_PIN_0);
     GPIOIntClear(GPIO_PORTB_BASE,GPIO_INT_PIN_1);
-
-
 
     GPIOIntRegisterPin(GPIO_PORTB_BASE, GPIO_INT_PIN_1, GPIOIntHandler); // Sets the interrupt action upon reading
     GPIOIntRegisterPin(GPIO_PORTB_BASE, GPIO_INT_PIN_0, GPIOIntHandler);
