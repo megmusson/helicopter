@@ -75,8 +75,8 @@ void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
 uint32_t yaw = 0;
-int8_t yawChangeTable[16] = { 0, 1, 0,-1,-1, 1, 0, 0,
-                              1, 0, 0,-1, 0,-1, 1, 0};
+int8_t yawChangeTable[16] = { 0, -1, 0, 1, 1, -1, 0, 0,
+                              -1, 0, 0,1, 0, 1, -1, 0};
 
 
 
