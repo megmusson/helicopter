@@ -74,8 +74,8 @@ void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 #define PHASE_B GPIO_INT_PIN_1
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
-uint32_t yaw = 0;
-int8_t yawChangeTable[16] = { 0, -1, 0, 1, 1, -1, 0, 0,
+int32_t yaw = 0;
+int8_t yawChangeTable[16] = { 0, -1, 1, 0, 1, 0, 0, -1,
                               -1, 0, 0,1, 0, 1, -1, 0};
 
 
@@ -243,8 +243,21 @@ initYawGPIO (void)
 
 }
 
+int32_t calcDegrees (int32_t yaw_cur)
+{
+    int32_t degrees;
+    if (yaw == 221) {
+        yaw = -219 ;
+    } else if (yaw == -220) {
+        yaw = 220;
+    }
+    degrees = ((yaw_cur*360)/440)%180;
+
+    return degrees;
+}
+
 void
-displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)
+displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)// WE can delete this
 {
     char text_buffer[17];           //Display fits 16 characters wide.
 
@@ -283,7 +296,7 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
     OLEDStringDraw (string, 0, 3);
 
 
-    usnprintf (string, sizeof(string), "Yaw = %4d", yaw);
+    usnprintf (string, sizeof(string), "Yaw = %4d", calcDegrees(yaw));
     OLEDStringDraw(string, 0, 2);
 }
 
