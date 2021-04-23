@@ -72,6 +72,7 @@ void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 //YAW MEASUREMENT DEFINITIONS AND GLOBAL VARIABLES
 #define PHASE_A GPIO_INT_PIN_0
 #define PHASE_B GPIO_INT_PIN_1
+
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
 int32_t yaw = 0;
@@ -197,26 +198,26 @@ initDisplay (void)
 }
 
 
-uint8_t y_in_prev = 0; //global variables to save previous bit states.
+uint8_t yPrev = 0; //global variables to save previous bit states.
 
 void
 GPIOIntHandler(void)
 {
     //get values from both sensors as well as their previous values
     uint8_t Value = 0;
-    uint8_t y_in_read;
+    uint8_t yInRead;
 
-    y_in_read = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
+    yInRead = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
 
 
-    Value = y_in_prev<<2 | y_in_read;
+    Value = yPrev<<2 | yInRead;
 
 
     //use table to determine whether add or subtract one to yaw
     yaw = yaw + yawChangeTable[Value];
 
 
-    y_in_prev = y_in_read;
+    yPrev = yInRead;
     GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
 
 
@@ -259,15 +260,15 @@ int32_t calcDegrees (int32_t yaw_cur)
 void
 displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)// WE can delete this
 {
-    char text_buffer[17];           //Display fits 16 characters wide.
+    char textBuffer[17];           //Display fits 16 characters wide.
 
     // "Undraw" the previous contents of the line to be updated.
     OLEDStringDraw ("                ", 0, charLine);
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf(text_buffer, sizeof(text_buffer), "%s %s %3d", str1, str2, num);
+    usnprintf(textBuffer, sizeof(textBuffer), "%s %s %3d", str1, str2, num);
     // Update line on display.
-    OLEDStringDraw (text_buffer, 0, charLine);
+    OLEDStringDraw (textBuffer, 0, charLine);
 }
 
 //*****************************************************************************
