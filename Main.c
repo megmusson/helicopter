@@ -27,6 +27,10 @@
 #include "buttons4.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 
+// Module includes
+#include "Modules/Altitude.h"
+#include "Modules/Yaw.h"
+
 
 /**********************************************************
  * Constants
@@ -73,16 +77,20 @@ void initSysTick (void);
 void initialisePWM (void);
 void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 
-
+int32_t yaw = 0;
+/*
 //YAW MEASUREMENT DEFINITIONS AND GLOBAL VARIABLES
 #define PHASE_A GPIO_INT_PIN_0
 #define PHASE_B GPIO_INT_PIN_1
 
-uint32_t ui32Freq = PWM_START_RATE_HZ;
-uint32_t ui32Duty = PWM_START_DUTY;
-int32_t yaw = 0;
+
+
 int8_t yawChangeTable[16] = { 0, -1, 1, 0, 1, 0, 0, -1,
                               -1, 0, 0,1, 0, 1, -1, 0};
+                              */
+
+uint32_t ui32Freq = PWM_START_RATE_HZ;
+uint32_t ui32Duty = PWM_START_DUTY;
 static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
 /***********************************************************
@@ -111,6 +119,7 @@ SysTickIntHandler(void)
 // Writes to the circular buffer.
 //
 //*****************************************************************************
+/*
 void
 ADCIntHandler(void)
 {
@@ -128,7 +137,7 @@ ADCIntHandler(void)
     ADCIntClear(ADC0_BASE, 3);
 
 }
-
+*/
 
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
@@ -152,6 +161,7 @@ initClock (void)
     SysTickEnable();
 }
 
+/*
 void
 initADC (void)
 {
@@ -188,7 +198,7 @@ initADC (void)
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
     ADCIntEnable(ADC0_BASE, 3);
 }
-
+*/
 void
 initDisplay (void)
 {
@@ -196,31 +206,10 @@ initDisplay (void)
     OLEDInitialise ();
 }
 
-
+/*
 uint8_t yPrev = 0; //global variables to save previous bit states.
 
-void
-GPIOIntHandler(void)
-{
-    //get values from both sensors as well as their previous values
-    uint8_t Value = 0;
-    uint8_t yInRead;
 
-    yInRead = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-
-
-    Value = yPrev<<2 | yInRead;
-
-
-    //use table to determine whether add or subtract one to yaw
-    yaw = yaw + yawChangeTable[Value];
-
-
-    yPrev = yInRead;
-    GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
-
-
-}
 
 void
 initYawGPIO (void)
@@ -242,7 +231,7 @@ initYawGPIO (void)
     GPIOIntEnable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);//enable the interrupt on pin 0 and pin 1 on port B
 
 }
-
+*/
 int32_t calcDegrees (int32_t yawCur)
 {
     // Calculates the current yaw position in degrees between 180 and -180 degrees.

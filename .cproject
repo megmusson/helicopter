@@ -83,7 +83,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Modules" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="uartDemo.c|pwmGen4.c|pwmGen3.c|pwmGen2.c|pwmGen.c|OLEDTest.c|butsTest4.c|ADCdemo2.c|ADCdemo1.c|Modules" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Modules"/>
 					</sourceEntries>
 				</configuration>
