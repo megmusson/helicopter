@@ -51,10 +51,8 @@
 #define PWM_MAIN_GPIO_BASE   GPIO_PORTC_BASE
 #define PWM_MAIN_GPIO_CONFIG GPIO_PC5_M0PWM7
 #define PWM_MAIN_GPIO_PIN    GPIO_PIN_5
-
 #define BUF_SIZE 10
 #define SAMPLE_RATE_HZ 10
-
 #define OLED_REFRESH_DIVIDER    60
 
 
@@ -78,12 +76,6 @@ uint32_t ui32Duty = PWM_START_DUTY;
 int32_t yaw = 0;
 int8_t yawChangeTable[16] = { 0, -1, 1, 0, 1, 0, 0, -1,
                               -1, 0, 0,1, 0, 1, -1, 0};
-
-
-
-
-
-
 static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
 /***********************************************************
@@ -244,15 +236,16 @@ initYawGPIO (void)
 
 }
 
-int32_t calcDegrees (int32_t yaw_cur)
+int32_t calcDegrees (int32_t yawCur)
 {
+    // Calculates the current yaw position in degrees between 180 and -180 degrees.
     int32_t degrees;
     if (yaw == 221) {
         yaw = -219 ;
     } else if (yaw == -220) {
         yaw = 220;
     }
-    degrees = ((yaw_cur*360)/440)%180;
+    degrees = ((yawCur*360)/440)%180;
 
     return degrees;
 }
