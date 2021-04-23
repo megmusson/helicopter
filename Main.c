@@ -1,4 +1,11 @@
-// Main helicopter control file
+
+/*
+ * ENCE361 Helicopter Project 2021
+ * Luke Forrester, Cameron McDrury, Meg Musson
+ *
+ * Code for Texas Instruments TIVA TM4C123G Launchpad with added Booster board.
+ * Controls a small RC helicopter on a stand, capable of altitude and yaw changes.
+ */
 
 #include <stdint.h>
 #include <stdio.h>
