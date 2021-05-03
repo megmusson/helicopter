@@ -77,21 +77,12 @@ void initSysTick (void);
 void initialisePWM (void);
 void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 
-int32_t yaw = 0;
-/*
-//YAW MEASUREMENT DEFINITIONS AND GLOBAL VARIABLES
-#define PHASE_A GPIO_INT_PIN_0
-#define PHASE_B GPIO_INT_PIN_1
 
 
-
-int8_t yawChangeTable[16] = { 0, -1, 1, 0, 1, 0, 0, -1,
-                              -1, 0, 0,1, 0, 1, -1, 0};
-                              */
 
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
-static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
+//static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
 /***********************************************************
  * ISR for the SysTick interrupt (used for button debouncing).
@@ -113,31 +104,6 @@ SysTickIntHandler(void)
 
 }
 
-//*****************************************************************************
-//
-// The handler for the ADC conversion complete interrupt.
-// Writes to the circular buffer.
-//
-//*****************************************************************************
-/*
-void
-ADCIntHandler(void)
-{
-    uint32_t ulValue;
-
-    //
-    // Get the single sample from ADC0.  ADC_BASE is defined in
-    // inc/hw_memmap.h
-    ADCSequenceDataGet(ADC0_BASE, 3, &ulValue);
-    //
-    // Place it in the circular buffer (advancing write index)
-    writeCircBuf (&g_inBuffer, ulValue);
-    //
-    // Clean up, clearing the interrupt
-    ADCIntClear(ADC0_BASE, 3);
-
-}
-*/
 
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
@@ -161,44 +127,6 @@ initClock (void)
     SysTickEnable();
 }
 
-/*
-void
-initADC (void)
-{
-    //
-    // The ADC0 peripheral must be enabled for configuration and use.
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-
-    // Enable sample sequence 3 with a processor signal trigger.  Sequence 3
-    // will do a single sample when the processor sends a signal to start the
-    // conversion.
-    ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
-
-    //
-    // Configure step 0 on sequence 3.  Sample channel 0 (ADC_CTL_CH0) in
-    // single-ended mode (default) and configure the interrupt flag
-    // (ADC_CTL_IE) to be set when the sample is done.  Tell the ADC logic
-    // that this is the last conversion on sequence 3 (ADC_CTL_END).  Sequence
-    // 3 has only one programmable step.  Sequence 1 and 2 have 4 steps, and
-    // sequence 0 has 8 programmable steps.  Since we are only doing a single
-    // conversion using sequence 3 we will only configure step 0.  For more
-    // on the ADC sequences and steps, refer to the LM3S1968 datasheet
-    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH9 | ADC_CTL_IE | // CHANGE HERE FOR LAB++++++++++++++++++++++++++++++++++++++++
-                             ADC_CTL_END);
-
-    //
-    // Since sample sequence 3 is now configured, it must be enabled.
-    ADCSequenceEnable(ADC0_BASE, 3);
-
-    //
-    // Register the interrupt handler
-    ADCIntRegister (ADC0_BASE, 3, ADCIntHandler);
-
-    //
-    // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
-    ADCIntEnable(ADC0_BASE, 3);
-}
-*/
 void
 initDisplay (void)
 {
@@ -206,32 +134,6 @@ initDisplay (void)
     OLEDInitialise ();
 }
 
-/*
-uint8_t yPrev = 0; //global variables to save previous bit states.
-
-
-
-void
-initYawGPIO (void)
-{
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-
-    GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-
-    //GPIOPadConfigSet (GPIO_PORTB_BASE, PHASE_A | PHASE_B,
-               //       GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
-
-
-    //GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_A, GPIOIntHandler); // Sets the interrupt action upon reading
-    // GPIOIntRegisterPin(GPIO_PORTB_BASE, PHASE_B, GPIOIntHandler);
-
-    GPIOIntRegister(GPIO_PORTB_BASE, GPIOIntHandler);
-
-    GPIOIntTypeSet(GPIO_PORTB_BASE,PHASE_A | PHASE_B, GPIO_BOTH_EDGES);
-    GPIOIntEnable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);//enable the interrupt on pin 0 and pin 1 on port B
-
-}
-*/
 int32_t calcDegrees (int32_t yawCur)
 {
     // Calculates the current yaw position in degrees between 180 and -180 degrees.
@@ -269,8 +171,6 @@ void
 displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t voltageMaxHeight)
 {
     char string[17];  // 16 characters across the display
-
-
 
     OLEDStringDraw ("Heli Control", 0, 0);
     // This works
@@ -323,8 +223,6 @@ displayOff(void)
 int
 main(void)
 {
-
-
     uint16_t i;
     int32_t sum;
     SysCtlPeripheralReset (UP_BUT_PERIPH);        // UP button GPIO
@@ -338,16 +236,9 @@ main(void)
 
     initCircBuf (&g_inBuffer, BUF_SIZE);
 
-
-
-
     // Enable interrupts to the processor.
     IntMasterEnable();
     SysCtlDelay (SysCtlClockGet() / 6);
-
-
-
-
 
     // Read the landed ADC.
     uint16_t voltageLanded = readCircBuf(&g_inBuffer);
@@ -356,12 +247,9 @@ main(void)
     // Flag to keep track of display modes
     uint8_t flag = 0; // 0 for percent, 1 for adc or 2 for off
 
-
-
     while (1)
     {
         // Main loop
-
         updateButtons();
         // Background task: calculate the (approximate) mean of the values in the
         // circular buffer and display it, together with the sample number.
@@ -378,7 +266,6 @@ main(void)
                 flag = 0;
             }
         }
-
         if (checkButton(LEFT) == PUSHED) {
             // Reset landed voltage
             voltageLanded = readCircBuf(&g_inBuffer);
@@ -394,7 +281,6 @@ main(void)
         }   else {
             displayOff();
         }
-
 
        SysCtlDelay (SysCtlClockGet() / 150);  // Update display
     }

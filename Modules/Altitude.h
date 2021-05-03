@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-
+circBuf_t g_inBuffer;
 
 
 void

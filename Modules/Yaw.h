@@ -12,6 +12,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define PHASE_A GPIO_INT_PIN_0
+#define PHASE_B GPIO_INT_PIN_1
+
+int yaw;
+
+
 void
 GPIOIntHandler(void);
 
