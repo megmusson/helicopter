@@ -1,4 +1,3 @@
-
 /*
  * ENCE361 Helicopter Project 2021
  * Luke Forrester, Cameron McDrury, Meg Musson
@@ -37,7 +36,6 @@
 #include "Modules/Altitude.h"
 #include "Modules/Yaw.h"
 
-
 /**********************************************************
  * Constants
  **********************************************************/
@@ -68,24 +66,19 @@
 #define PWM_MAIN_GPIO_BASE   GPIO_PORTC_BASE
 #define PWM_MAIN_GPIO_CONFIG GPIO_PC5_M0PWM7
 #define PWM_MAIN_GPIO_PIN    GPIO_PIN_5
-#define BUF_SIZE 10
-#define SAMPLE_RATE_HZ 10
+#define BUF_SIZE 30
+#define SAMPLE_RATE_HZ 60
 #define OLED_REFRESH_DIVIDER    60
-
-
 
 /*******************************************
  *      Local prototypes
  *******************************************/
 
-void SysTickIntHandler (void);
-void initClocks (void);
-void initSysTick (void);
-void initialisePWM (void);
-void setPWM (uint32_t u32Freq, uint32_t u32Duty);
-
-
-
+void SysTickIntHandler(void);
+void initClocks(void);
+void initSysTick(void);
+void initialisePWM(void);
+void setPWM(uint32_t u32Freq, uint32_t u32Duty);
 
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
@@ -100,8 +93,7 @@ static uint32_t g_ulSampCnt;    // Counter for the interrupts
 // The interrupt handler for the for SysTick interrupt.
 //
 //*****************************************************************************
-void
-SysTickIntHandler(void)
+void SysTickIntHandler(void)
 {
     //
     // Initiate a conversion and update the buttons
@@ -112,16 +104,14 @@ SysTickIntHandler(void)
 
 }
 
-
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
 //*****************************************************************************
-void
-initClock (void)
+void initClock(void)
 {
     // Set the clock rate to 20 MHz
-    SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
-                   SYSCTL_XTAL_16MHZ);
+    SysCtlClockSet(SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
+    SYSCTL_XTAL_16MHZ);
     //
     // Set up the period for the SysTick timer.  The SysTick timer period is
     // set as a function of the system clock.
@@ -135,27 +125,23 @@ initClock (void)
     SysTickEnable();
 }
 
-void
-initDisplay (void)
+void initDisplay(void)
 {
     // intialise the Orbit OLED display
-    OLEDInitialise ();
+    OLEDInitialise();
 }
 
-
-
-void
-displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)// WE can delete this
+void displayUpdate(char *str1, char *str2, uint32_t num, uint8_t charLine) // WE can delete this
 {
     char textBuffer[17];           //Display fits 16 characters wide.
 
     // "Undraw" the previous contents of the line to be updated.
-    OLEDStringDraw ("                ", 0, charLine);
+    OLEDStringDraw("                ", 0, charLine);
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
     usnprintf(textBuffer, sizeof(textBuffer), "%s %s %3d", str1, str2, num);
     // Update line on display.
-    OLEDStringDraw (textBuffer, 0, charLine);
+    OLEDStringDraw(textBuffer, 0, charLine);
 }
 
 //*****************************************************************************
@@ -163,51 +149,50 @@ displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)// WE can 
 // Function to display the mean ADC value (10-bit value, note) and sample count.
 //
 //*****************************************************************************
-void
-displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t voltageMaxHeight)
+void displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded,
+                       uint16_t voltageMaxHeight)
 {
     char string[17];  // 16 characters across the display
 
-    OLEDStringDraw ("Heli Control", 0, 0);
+    OLEDStringDraw("Heli Control", 0, 0);
     // This works
-    uint32_t percent =  100 - 100*(((2 * sum + BUF_SIZE) / 2 / BUF_SIZE) - voltageMaxHeight)/(voltageLanded-voltageMaxHeight);
+    uint32_t percent = 100
+            - 100 * (((2 * sum + BUF_SIZE) / 2 / BUF_SIZE) - voltageMaxHeight)
+                    / (voltageLanded - voltageMaxHeight);
 
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf (string, sizeof(string), "Height %% = %4d", percent);
+    usnprintf(string, sizeof(string), "Height %% = %4d", percent);
     // Update line on display.
-    OLEDStringDraw (string, 0, 1);
+    OLEDStringDraw(string, 0, 1);
 
-    usnprintf (string, sizeof(string), "Sample # %5d", count);
-    OLEDStringDraw (string, 0, 3);
+    usnprintf(string, sizeof(string), "Sample # %5d", count);
+    OLEDStringDraw(string, 0, 3);
 
-
-    usnprintf (string, sizeof(string), "Yaw = %4d", calcDegrees()); // calcDegrees()
+    usnprintf(string, sizeof(string), "Yaw = %4d", calcDegrees()); // calcDegrees()
     OLEDStringDraw(string, 0, 2);
 }
 
-void
-displayMeanADC(int32_t sum, uint32_t count)
+void displayMeanADC(int32_t sum, uint32_t count)
 {
     char string[17];  // 16 characters across the display
 
-    OLEDStringDraw ("Heli Control", 0, 0);
+    OLEDStringDraw("Heli Control", 0, 0);
     // This works
-    uint32_t mean =  (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
+    uint32_t mean = (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
 
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf (string, sizeof(string), "Mean ADC = %4d", mean);
+    usnprintf(string, sizeof(string), "Mean ADC = %4d", mean);
     // Update line on display.
-    OLEDStringDraw (string, 0, 1);
+    OLEDStringDraw(string, 0, 1);
     OLEDStringDraw("              ", 0, 2);
 
-    usnprintf (string, sizeof(string), "Sample # %5d", count);
-    OLEDStringDraw (string, 0, 3);
+    usnprintf(string, sizeof(string), "Sample # %5d", count);
+    OLEDStringDraw(string, 0, 3);
 }
 
-void
-displayOff(void)
+void displayOff(void)
 {
     // Blank the display
     OLEDStringDraw("                ", 0, 0);
@@ -216,26 +201,25 @@ displayOff(void)
     OLEDStringDraw("                ", 0, 3);
 }
 
-int
-main(void)
+int main(void)
 {
     uint16_t i;
     int32_t sum;
 
-    SysCtlPeripheralReset (UP_BUT_PERIPH);        // UP button GPIO
-    SysCtlPeripheralReset (DOWN_BUT_PERIPH);      // DOWN button GPIO
+    SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
+    SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);     // LEFT button GPIO
-    initButtons ();
-    initClock ();
-    initADC ();
-    initDisplay ();
+    initButtons();
+    initClock();
+    initADC();
+    initDisplay();
     initYawGPIO();
 
-    initCircBuf (&g_inBuffer, BUF_SIZE);
+    initCircBuf(&g_inBuffer, BUF_SIZE);
 
     // Enable interrupts to the processor.
     IntMasterEnable();
-    SysCtlDelay (SysCtlClockGet() / 6);
+    SysCtlDelay(SysCtlClockGet() / 6);
 
     // Read the landed ADC.
     uint16_t voltageLanded = readCircBuf(&g_inBuffer);
@@ -251,37 +235,45 @@ main(void)
         // Background task: calculate the (approximate) mean of the values in the
         // circular buffer and display it, together with the sample number.
         sum = 0;
-        for (i = 0; i < BUF_SIZE; i++) {
-            sum = sum + readCircBuf (&g_inBuffer);
+        for (i = 0; i < BUF_SIZE; i++)
+        {
+            sum = sum + readCircBuf(&g_inBuffer);
         }
 
-        if (checkButton(UP) == PUSHED) {
+        if (checkButton(UP) == PUSHED)
+        {
             // Change the display mode flag
             flag = flag + 1;
-            if (flag == 3) {
+            if (flag == 3)
+            {
                 // Loop back around, only 3 modes.
                 flag = 0;
             }
         }
-        if (checkButton(LEFT) == PUSHED) {
+        if (checkButton(LEFT) == PUSHED)
+        {
             // Reset landed voltage
             voltageLanded = readCircBuf(&g_inBuffer);
         }
 
         // Alternate between displays
-        if (flag == 0) {
-            displayAltPercent(sum, g_ulSampCnt, voltageLanded, voltageMaxHeight);
+        if (flag == 0)
+        {
+            displayAltPercent(sum, g_ulSampCnt, voltageLanded,
+                              voltageMaxHeight);
 
-        }   else if (flag == 1) {
+        }
+        else if (flag == 1)
+        {
             displayMeanADC(sum, g_ulSampCnt);
 
-        }   else {
+        }
+        else
+        {
             displayOff();
         }
 
-
-
-       //SysCtlDelay (SysCtlClockGet() / 150);  // Update display
+        //SysCtlDelay (SysCtlClockGet() / 150);  // Update display
     }
 }
 

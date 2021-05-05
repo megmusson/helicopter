@@ -15,11 +15,10 @@
 #define PHASE_A GPIO_INT_PIN_0
 #define PHASE_B GPIO_INT_PIN_1
 
-int yaw;
+
 
 
 uint8_t Value;
-uint8_t yInRead;
 
 /*
 

@@ -15,20 +15,25 @@
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "Modules/Yaw.h"
 
+
 //YAW MEASUREMENT DEFINITIONS AND GLOBAL VARIABLES
 // PORT B
 #define PHASE_A GPIO_INT_PIN_0
 #define PHASE_B GPIO_INT_PIN_1
 
+static int yaw;
 
-int8_t yawChangeTable[16] = { 0, -1, 1, 0, 1, 0, 0, -1,
-                              -1, 0, 0,1, 0, 1, -1, 0};
+uint8_t yInRead = 0;
+int8_t yawChangeTable[16] = { 0, -1, 1, 0,
+                                            1, 0, 0, -1,
+                                           -1, 0, 0,1,
+                                           0, 1, -1, 0};
 uint8_t yPrev = 0; //global variables to save previous bit states.
 
 
 
 
-
+/*
 void
 GPIOIntHandler(void)
 {
@@ -42,6 +47,24 @@ GPIOIntHandler(void)
     GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
     IntMasterEnable();
 
+}
+*/
+void
+GPIOIntHandler(void)
+{
+
+    yInRead = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
+    Value = yPrev<<2 | yInRead;
+    //use table to determine whether add or subtract one to yaw
+    yaw = yaw + yawChangeTable[Value];
+    yPrev = yInRead & 0b0011;
+    GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
+
+    if (yaw >= 225) {
+        yaw -= 448;
+    } else if (yaw <= -224) {
+        yaw += 448;
+    }
 }
 
 /*
@@ -74,23 +97,10 @@ int32_t calcDegrees (void)
     // Calculates the current yaw position in degrees between 180 and -180 degrees.
     // Also keeps yaw within -220 and +220
 
-    // Create a critical section, these calculations take ages and should be protected
 
-
-    IntMasterDisable();
     int32_t degrees;
-    if (yaw >= 225) {
-        yaw = -224 ;
-    } else if (yaw <= -224) {
-        yaw = 224;
-    }
     // Sets degrees to 180 if yaw is at the 180 position, preventing the % sign from setting degrees to zero.
-    if (yaw == 224) {
-        degrees = 180;
-    } else {
-        degrees = ((yaw*360)/448)%180;
-    }
-    IntMasterEnable();
+    degrees = ((yaw*360)/448);
 
     return degrees;
 }
