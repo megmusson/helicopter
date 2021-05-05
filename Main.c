@@ -5,6 +5,12 @@
  *
  * Code for Texas Instruments TIVA TM4C123G Launchpad with added Booster board.
  * Controls a small RC helicopter on a stand, capable of altitude and yaw changes.
+ *
+ *
+ * Heli Rig plugs:
+ * Altitude = PE4
+ * Yaw = PB0, PB1 (A, B)
+ *
  */
 
 #include <stdint.h>
@@ -71,6 +77,7 @@
 /*******************************************
  *      Local prototypes
  *******************************************/
+
 void SysTickIntHandler (void);
 void initClocks (void);
 void initSysTick (void);
@@ -82,6 +89,7 @@ void setPWM (uint32_t u32Freq, uint32_t u32Duty);
 
 uint32_t ui32Freq = PWM_START_RATE_HZ;
 uint32_t ui32Duty = PWM_START_DUTY;
+
 //static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
 /***********************************************************
@@ -134,19 +142,7 @@ initDisplay (void)
     OLEDInitialise ();
 }
 
-int32_t calcDegrees (int32_t yawCur)
-{
-    // Calculates the current yaw position in degrees between 180 and -180 degrees.
-    int32_t degrees;
-    if (yaw == 221) {
-        yaw = -219 ;
-    } else if (yaw == -220) {
-        yaw = 220;
-    }
-    degrees = ((yawCur*360)/440)%180;
 
-    return degrees;
-}
 
 void
 displayUpdate (char *str1, char *str2, uint32_t num, uint8_t charLine)// WE can delete this
@@ -186,7 +182,7 @@ displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded, uint16_t 
     OLEDStringDraw (string, 0, 3);
 
 
-    usnprintf (string, sizeof(string), "Yaw = %4d", calcDegrees(yaw));
+    usnprintf (string, sizeof(string), "Yaw = %4d", calcDegrees()); // calcDegrees()
     OLEDStringDraw(string, 0, 2);
 }
 
@@ -225,6 +221,7 @@ main(void)
 {
     uint16_t i;
     int32_t sum;
+
     SysCtlPeripheralReset (UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset (DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);     // LEFT button GPIO
@@ -282,7 +279,9 @@ main(void)
             displayOff();
         }
 
-       SysCtlDelay (SysCtlClockGet() / 150);  // Update display
+
+
+       //SysCtlDelay (SysCtlClockGet() / 150);  // Update display
     }
 }
 

@@ -18,12 +18,23 @@
 int yaw;
 
 
+uint8_t Value;
+uint8_t yInRead;
+
+/*
+
+int8_t yawChangeTable[16];
+uint8_t yPrev; //global variables to save previous bit states.
+*/
+
 void
 GPIOIntHandler(void);
 
 void
 initYawGPIO (void);
 
+int32_t
+calcDegrees(void);
 
 
 
