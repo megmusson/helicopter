@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define BUF_SIZE 30
 circBuf_t g_inBuffer;
 
 

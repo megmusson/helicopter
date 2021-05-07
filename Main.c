@@ -66,7 +66,7 @@
 #define PWM_MAIN_GPIO_BASE   GPIO_PORTC_BASE
 #define PWM_MAIN_GPIO_CONFIG GPIO_PC5_M0PWM7
 #define PWM_MAIN_GPIO_PIN    GPIO_PIN_5
-#define BUF_SIZE 30
+
 #define SAMPLE_RATE_HZ 60
 #define OLED_REFRESH_DIVIDER    60
 
@@ -131,19 +131,6 @@ void initDisplay(void)
     OLEDInitialise();
 }
 
-void displayUpdate(char *str1, char *str2, uint32_t num, uint8_t charLine) // WE can delete this
-{
-    char textBuffer[17];           //Display fits 16 characters wide.
-
-    // "Undraw" the previous contents of the line to be updated.
-    OLEDStringDraw("                ", 0, charLine);
-    // Form a new string for the line.  The maximum width specified for the
-    //  number field ensures it is displayed right justified.
-    usnprintf(textBuffer, sizeof(textBuffer), "%s %s %3d", str1, str2, num);
-    // Update line on display.
-    OLEDStringDraw(textBuffer, 0, charLine);
-}
-
 //*****************************************************************************
 //
 // Function to display the mean ADC value (10-bit value, note) and sample count.
@@ -157,7 +144,7 @@ void displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded,
     OLEDStringDraw("Heli Control", 0, 0);
     // This works
     uint32_t percent = 100
-            - 100 * (((2 * sum + BUF_SIZE) / 2 / BUF_SIZE) - voltageMaxHeight)
+            - 100 * ((2 * sum + BUF_SIZE) / 2 / BUF_SIZE)( - voltageMaxHeight)
                     / (voltageLanded - voltageMaxHeight);
 
     // Form a new string for the line.  The maximum width specified for the
@@ -273,7 +260,7 @@ int main(void)
             displayOff();
         }
 
-        //SysCtlDelay (SysCtlClockGet() / 150);  // Update display
+        SysCtlDelay (SysCtlClockGet() / 150);  // Update display
     }
 }
 
