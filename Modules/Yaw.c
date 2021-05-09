@@ -20,6 +20,8 @@
 // PORT B
 #define PHASE_A GPIO_INT_PIN_0
 #define PHASE_B GPIO_INT_PIN_1
+#define YAW_EDGES 448
+#define ROTATION_DEG 360
 
 static int yaw;
 
@@ -100,7 +102,7 @@ int32_t calcDegrees (void)
 
     int32_t degrees;
     // Sets degrees to 180 if yaw is at the 180 position, preventing the % sign from setting degrees to zero.
-    degrees = ((yaw*360)/448);
+    degrees = ((yaw*ROTATION_DEG)/YAW_EDGES);
 
     return degrees;
 }
