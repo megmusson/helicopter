@@ -211,14 +211,17 @@ int main(void)
     SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);      // LEFT button GPIO
     SysCtlPeripheralReset(RIGHT_BUT_PERIPH);     // RIGHT button GPIO
+    resetPWMs();
 
-    initButtons();
     initClock();
+    initButtons();
     initADC();
     initDisplay();
+
     initYawGPIO();
     initialisePWMs ();
     initialiseUSB_UART ();
+
 
     enablePWMs();
 
@@ -247,18 +250,19 @@ int main(void)
           {//Decrease Target Altitude by 10%
             //changeTargetAltitude(ALT_STEP_NEG);
             //setMinMaxAlt();
-            if(test_duty_cycle_main >= 1){
-                test_duty_cycle_main -=1;
+            if(test_duty_cycle_main >= 2){
+                test_duty_cycle_main -=2;
                 setPWMmain(PWM_FREQ, test_duty_cycle_main);
                 }
           }
+
         if (checkButton(LEFT) == PUSHED)
         {
             // Decrease yaw by 15 degrees
             //changeTargetYaw(YAW_STEP_NEG);
-            if (test_duty_cycle_tail >=1){
-              //  test_duty_cycle_tail -= 1;
-              //  setPWMtail(PWM_FREQ,test_duty_cycle_tail);
+            if (test_duty_cycle_tail >=2){
+               test_duty_cycle_tail -= 2;
+               setPWMtail(PWM_FREQ,test_duty_cycle_tail);
             }
         }
         if (checkButton(RIGHT) == PUSHED)
@@ -266,8 +270,8 @@ int main(void)
             // Decrease yaw by 15 degrees
             //(YAW_STEP_POS);
             if (test_duty_cycle_tail <=90){
-                //test_duty_cycle_tail += 1;
-               // setPWMtail(PWM_FREQ,test_duty_cycle_tail);
+                test_duty_cycle_tail += 2;
+                setPWMtail(PWM_FREQ,test_duty_cycle_tail);
             }
         }
 

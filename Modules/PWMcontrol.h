@@ -14,6 +14,9 @@
  * M1PWM5 is used for the tail rotor
  *********************************************************/
 void
+resetPWMs(void);
+
+void
 initialisePWMs (void);
 
 void

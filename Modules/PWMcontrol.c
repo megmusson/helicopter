@@ -71,15 +71,23 @@ int32_t yawTarget; //Degrees
  * M1PWM5 is used for the tail rotor
  *********************************************************/
 void
+resetPWMs(void){
+        SysCtlPeripheralReset (PWM_MAIN_PERIPH_PWM);
+        SysCtlPeripheralReset (PWM_TAIL_PERIPH_PWM);
+        SysCtlPeripheralReset (PWM_MAIN_PERIPH_GPIO); // Used for PWM output
+        SysCtlPeripheralReset (PWM_TAIL_PERIPH_GPIO);
+}
+
+void
 initialisePWMs (void)
 {
 
-    SysCtlPeripheralReset (PWM_MAIN_PERIPH_PWM);
-    SysCtlPeripheralReset (PWM_TAIL_PERIPH_PWM);
+    //SysCtlPeripheralReset (PWM_MAIN_PERIPH_PWM);
+   // SysCtlPeripheralReset (PWM_TAIL_PERIPH_PWM);
 
 
-    SysCtlPeripheralReset (PWM_MAIN_PERIPH_GPIO); // Used for PWM output
-    SysCtlPeripheralReset (PWM_TAIL_PERIPH_GPIO); // Used for PWM output TAIL
+    //SysCtlPeripheralReset (PWM_MAIN_PERIPH_GPIO); // Used for PWM output
+   // SysCtlPeripheralReset (PWM_TAIL_PERIPH_GPIO); // Used for PWM output TAIL
 
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
