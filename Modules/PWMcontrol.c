@@ -22,7 +22,7 @@
 #define PWM_DUTY_MAX    95
 #define PWM_DUTY_MIN    5
 #define PWM_DIVIDER_CODE   SYSCTL_PWMDIV_4
-#define PWM_DIVIDER        4
+#define PWM_DIVIDER        1
 //  PWM Hardware Details M0PWM7 (gen 3)
 //  ---Main Rotor PWM: PC5, J4-05
 #define PWM_MAIN_BASE        PWM0_BASE
