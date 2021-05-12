@@ -27,9 +27,9 @@ static int yaw;
 
 uint8_t yInRead = 0;
 int8_t yawChangeTable[16] = { 0, -1, 1, 0,
-                                            1, 0, 0, -1,
-                                           -1, 0, 0,1,
-                                           0, 1, -1, 0};
+                              1, 0, 0, -1,
+                              -1, 0, 0,1,
+                              0, 1, -1, 0};
 uint8_t yPrev = 0; //global variables to save previous bit states.
 
 
@@ -94,16 +94,21 @@ initYawGPIO (void)
 
 }
 
-int32_t calcDegrees (void)
+int32_t
+calcDegrees (void)
 {
     // Calculates the current yaw position in degrees between 180 and -180 degrees.
     // Also keeps yaw within -220 and +220
-
-
     int32_t degrees;
     // Sets degrees to 180 if yaw is at the 180 position, preventing the % sign from setting degrees to zero.
     degrees = ((yaw*ROTATION_DEG)/YAW_EDGES);
-
     return degrees;
 }
+
+int32_t
+giveMeTheYaw(void)
+{
+    return(yaw);
+}
+
 

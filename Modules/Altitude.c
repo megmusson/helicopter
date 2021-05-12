@@ -14,8 +14,12 @@
 #include "stdlib.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "Modules/Altitude.h"
-
-
+#define BUF_SIZE 8
+#define MAX_VOLT_BITS 4096
+//static int bufSize = BUF_SIZE;
+static int voltageLanded =0;
+static int voltageMaxHeight=0;
+static int sum =0;
 //circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 
 //*****************************************************************************
@@ -77,5 +81,43 @@ initADC (void)
     //
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
     ADCIntEnable(ADC0_BASE, 3);
+
+    initCircBuf(&g_inBuffer, BUF_SIZE);
+
 }
 
+uint32_t
+calcAltAverage(void)
+{
+    //Calculates and returns the rounded average altitude of the helicopter.
+    uint32_t averageAltitude;
+    averageAltitude = (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
+    return averageAltitude;
+
+}
+
+uint32_t
+calcAltPercent(void){
+    // Calculates the altitude of the helicopter as a percentage relative to its maximum and minimum height
+    uint32_t percent;
+    percent = 100*(calcAltAverage()-voltageMaxHeight)/(voltageLanded - voltageMaxHeight)-100;
+    return percent;
+}
+
+void
+setMinMaxAlt(void)
+{
+    voltageLanded = readCircBuf(&g_inBuffer);
+    voltageMaxHeight = voltageLanded - MAX_VOLT_BITS;
+}
+
+void
+readAltitude(void)
+{
+    sum = 0;
+    int i;
+    for (i = 0; i < BUF_SIZE; i++)
+    {
+        sum = sum + readCircBuf(&g_inBuffer);
+    }
+}

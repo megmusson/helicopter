@@ -11,8 +11,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include "../circBufT.h"
 
-#define BUF_SIZE 30
+
 circBuf_t g_inBuffer;
 
 
@@ -22,7 +23,16 @@ ADCIntHandler(void);
 void
 initADC (void);
 
+uint32_t
+calcAltPercent(void);
 
+uint32_t
+calcAltAverage(void);
 
+void
+setMinMaxAlt(void);
+
+void
+readAltitude(void);
 
 #endif /* ALTITUDE_H_ */

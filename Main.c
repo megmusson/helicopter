@@ -9,6 +9,8 @@
  * Heli Rig plugs:
  * Altitude = PE4
  * Yaw = PB0, PB1 (A, B)
+ * PWM Main - PC5
+ * PWM Tail - PF1
  *
  */
 
@@ -31,57 +33,45 @@
 #include "inc/hw_ints.h"
 #include "buttons4.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
+#include "driverlib/uart.h"
 
 // Module includes
 #include "Modules/Altitude.h"
 #include "Modules/Yaw.h"
+#include "Modules/PWMcontrol.h"
 
 /**********************************************************
  * Constants
  **********************************************************/
-
 // Systick configuration
-#define SYSTICK_RATE_HZ    100
-
-// PWM configuration
-#define PWM_START_RATE_HZ  250
-#define PWM_RATE_STEP_HZ   50
-#define PWM_RATE_MIN_HZ    50
-#define PWM_RATE_MAX_HZ    400
-#define PWM_START_DUTY     95
-#define PWM_DUTY_STEP   5
-#define PWM_DUTY_MAX    95
-#define PWM_DUTY_MIN    5
-#define PWM_DIVIDER_CODE   SYSCTL_PWMDIV_4
-#define PWM_DIVIDER        4
-
-//  PWM Hardware Details M0PWM7 (gen 3)
-//  ---Main Rotor PWM: PC5, J4-05
-#define PWM_MAIN_BASE        PWM0_BASE
-#define PWM_MAIN_GEN         PWM_GEN_3
-#define PWM_MAIN_OUTNUM      PWM_OUT_7
-#define PWM_MAIN_OUTBIT      PWM_OUT_7_BIT
-#define PWM_MAIN_PERIPH_PWM  SYSCTL_PERIPH_PWM0
-#define PWM_MAIN_PERIPH_GPIO SYSCTL_PERIPH_GPIOC
-#define PWM_MAIN_GPIO_BASE   GPIO_PORTC_BASE
-#define PWM_MAIN_GPIO_CONFIG GPIO_PC5_M0PWM7
-#define PWM_MAIN_GPIO_PIN    GPIO_PIN_5
-
+#define SYSTICK_RATE_HZ    200
 #define SAMPLE_RATE_HZ 60
 #define OLED_REFRESH_DIVIDER    60
+#define DISPLAY_HZ 150
+#define SLOW_TICKRATE_HZ 4
 
+// Yaw and Altitude change values
+#define YAW_STEP_POS 15
+#define YAW_STEP_NEG -15
+#define ALT_STEP_POS 10
+#define ALT_STEP_NEG -10
+#define PWM_FREQ 250
 /*******************************************
  *      Local prototypes
  *******************************************/
-
 void SysTickIntHandler(void);
 void initClocks(void);
 void initSysTick(void);
-void initialisePWM(void);
-void setPWM(uint32_t u32Freq, uint32_t u32Duty);
 
-uint32_t ui32Freq = PWM_START_RATE_HZ;
-uint32_t ui32Duty = PWM_START_DUTY;
+//---USB Serial comms: UART0, Rx:PA0 , Tx:PA1
+#define BAUD_RATE 9600
+#define UART_USB_BASE           UART0_BASE
+#define UART_USB_PERIPH_UART    SYSCTL_PERIPH_UART0
+#define UART_USB_PERIPH_GPIO    SYSCTL_PERIPH_GPIOA
+#define UART_USB_GPIO_BASE      GPIO_PORTA_BASE
+#define UART_USB_GPIO_PIN_RX    GPIO_PIN_0
+#define UART_USB_GPIO_PIN_TX    GPIO_PIN_1
+#define UART_USB_GPIO_PINS      UART_USB_GPIO_PIN_RX | UART_USB_GPIO_PIN_TX
 
 //static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
@@ -100,6 +90,7 @@ void SysTickIntHandler(void)
     //
     updateButtons();
     ADCProcessorTrigger(ADC0_BASE, 3);
+    readAltitude();
     g_ulSampCnt++;
 
 }
@@ -133,134 +124,157 @@ void initDisplay(void)
 
 //*****************************************************************************
 //
-// Function to display the mean ADC value (10-bit value, note) and sample count.
+// Function to display the mean ADC value (10-bit value, note), yaw position and sample count.
 //
 //*****************************************************************************
-void displayAltPercent(int32_t sum, uint32_t count, uint16_t voltageLanded,
-                       uint16_t voltageMaxHeight)
+
+static uint32_t test_duty_cycle_main = 0;
+static uint32_t test_duty_cycle_tail = 0;
+static uint32_t ticks = 0;
+
+void
+UARTSend (char *pucBuffer)
 {
-    char string[17];  // 16 characters across the display
+    // Loop while there are more characters to send.
+    while(*pucBuffer)
+    {
+        // Write the next character to the UART Tx FIFO.
+        UARTCharPut(UART_USB_BASE, *pucBuffer);
+        pucBuffer++;
+    }
+}
 
-    OLEDStringDraw("Heli Control", 0, 0);
-    // This works
-    uint32_t percent = 100
-            - 100 * ((2 * sum + BUF_SIZE) / 2 / BUF_SIZE)( - voltageMaxHeight)
-                    / (voltageLanded - voltageMaxHeight);
-
+void displayStatus(void)
+{
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf(string, sizeof(string), "Height %% = %4d", percent);
+    char string[16];  // 16 characters across the display
+    usnprintf(string, sizeof(string), "Main DC = [%2d]\n\r", test_duty_cycle_main);
+    OLEDStringDraw(string, 0, 0);
+
+    if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)){
+        UARTSend(string);
+    }
+    usnprintf(string, sizeof(string), "Tail DC = [%2d]\n\r", test_duty_cycle_tail);//
     // Update line on display.
     OLEDStringDraw(string, 0, 1);
 
-    usnprintf(string, sizeof(string), "Sample # %5d", count);
-    OLEDStringDraw(string, 0, 3);
+    if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
+            UARTSend(string);
+        }
 
-    usnprintf(string, sizeof(string), "Yaw = %4d", calcDegrees()); // calcDegrees()
+    usnprintf(string, sizeof(string), "Alt %%=%2d [%2d]\n", calcAltPercent(),getTargetAltPercent());
     OLEDStringDraw(string, 0, 2);
-}
 
-void displayMeanADC(int32_t sum, uint32_t count)
-{
-    char string[17];  // 16 characters across the display
+    if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
+            UARTSend(string);
+        }
 
-    OLEDStringDraw("Heli Control", 0, 0);
-    // This works
-    uint32_t mean = (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
-
-    // Form a new string for the line.  The maximum width specified for the
-    //  number field ensures it is displayed right justified.
-    usnprintf(string, sizeof(string), "Mean ADC = %4d", mean);
-    // Update line on display.
-    OLEDStringDraw(string, 0, 1);
-    OLEDStringDraw("              ", 0, 2);
-
-    usnprintf(string, sizeof(string), "Sample # %5d", count);
+    usnprintf(string, sizeof(string), "Yaw=%3d [%3d]\n\r", calcDegrees(), getTargetYawDeg()); // calcDegrees()
     OLEDStringDraw(string, 0, 3);
+
+    if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
+            UARTSend(string);
+            ticks = 0;
+        }
 }
 
-void displayOff(void)
+//**********************************************************************
+// Transmit a string via UART0
+//**********************************************************************
+
+void
+initialiseUSB_UART (void)
 {
-    // Blank the display
-    OLEDStringDraw("                ", 0, 0);
-    OLEDStringDraw("                ", 0, 1);
-    OLEDStringDraw("                ", 0, 2);
-    OLEDStringDraw("                ", 0, 3);
+    //
+    // Enable GPIO port A which is used for UART0 pins.
+    //
+    SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
+    SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
+    //
+    // Select the alternate (UART) function for these pins.
+    //
+    GPIOPinTypeUART(UART_USB_GPIO_BASE, UART_USB_GPIO_PINS);
+    GPIOPinConfigure (GPIO_PA0_U0RX);
+    GPIOPinConfigure (GPIO_PA1_U0TX);
+
+    UARTConfigSetExpClk(UART_USB_BASE, SysCtlClockGet(), BAUD_RATE,
+            UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+            UART_CONFIG_PAR_NONE);
+    UARTFIFOEnable(UART_USB_BASE);
+    UARTEnable(UART_USB_BASE);
 }
 
 int main(void)
 {
-    uint16_t i;
-    int32_t sum;
-
     SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
-    SysCtlPeripheralReset(LEFT_BUT_PERIPH);     // LEFT button GPIO
+    SysCtlPeripheralReset(LEFT_BUT_PERIPH);      // LEFT button GPIO
+    SysCtlPeripheralReset(RIGHT_BUT_PERIPH);     // RIGHT button GPIO
+
     initButtons();
     initClock();
     initADC();
     initDisplay();
     initYawGPIO();
+    initialisePWMs ();
+    initialiseUSB_UART ();
 
-    initCircBuf(&g_inBuffer, BUF_SIZE);
+    enablePWMs();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
     SysCtlDelay(SysCtlClockGet() / 6);
 
-    // Read the landed ADC.
-    uint16_t voltageLanded = readCircBuf(&g_inBuffer);
-    uint16_t voltageMaxHeight = voltageLanded - 1000;
 
-    // Flag to keep track of display modes
-    uint8_t flag = 0; // 0 for percent, 1 for adc or 2 for off
+    setMinMaxAlt();
 
     while (1)
     {
         // Main loop
         updateButtons();
-        // Background task: calculate the (approximate) mean of the values in the
-        // circular buffer and display it, together with the sample number.
-        sum = 0;
-        for (i = 0; i < BUF_SIZE; i++)
-        {
-            sum = sum + readCircBuf(&g_inBuffer);
-        }
 
         if (checkButton(UP) == PUSHED)
         {
-            // Change the display mode flag
-            flag = flag + 1;
-            if (flag == 3)
-            {
-                // Loop back around, only 3 modes.
-                flag = 0;
+            //Increase Target Altitude by 10%
+            //changeTargetAltitude(ALT_STEP_POS);
+            if(test_duty_cycle_main <= 90){
+            test_duty_cycle_main +=2;
+            setPWMmain(PWM_FREQ, test_duty_cycle_main);
             }
         }
+        if (checkButton(DOWN) == PUSHED)
+          {//Decrease Target Altitude by 10%
+            //changeTargetAltitude(ALT_STEP_NEG);
+            //setMinMaxAlt();
+            if(test_duty_cycle_main >= 1){
+                test_duty_cycle_main -=1;
+                setPWMmain(PWM_FREQ, test_duty_cycle_main);
+                }
+          }
         if (checkButton(LEFT) == PUSHED)
         {
-            // Reset landed voltage
-            voltageLanded = readCircBuf(&g_inBuffer);
+            // Decrease yaw by 15 degrees
+            //changeTargetYaw(YAW_STEP_NEG);
+            if (test_duty_cycle_tail >=1){
+              //  test_duty_cycle_tail -= 1;
+              //  setPWMtail(PWM_FREQ,test_duty_cycle_tail);
+            }
         }
-
-        // Alternate between displays
-        if (flag == 0)
+        if (checkButton(RIGHT) == PUSHED)
         {
-            displayAltPercent(sum, g_ulSampCnt, voltageLanded,
-                              voltageMaxHeight);
-
-        }
-        else if (flag == 1)
-        {
-            displayMeanADC(sum, g_ulSampCnt);
-
-        }
-        else
-        {
-            displayOff();
+            // Decrease yaw by 15 degrees
+            //(YAW_STEP_POS);
+            if (test_duty_cycle_tail <=90){
+                //test_duty_cycle_tail += 1;
+               // setPWMtail(PWM_FREQ,test_duty_cycle_tail);
+            }
         }
 
-        SysCtlDelay (SysCtlClockGet() / 150);  // Update display
+        displayStatus();
+
+        SysCtlDelay (SysCtlClockGet() / DISPLAY_HZ);  // Update display
+        ticks += 1;
     }
 }
 
