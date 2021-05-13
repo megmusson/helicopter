@@ -23,10 +23,10 @@ ADCIntHandler(void);
 void
 initADC (void);
 
-uint32_t
+int32_t
 calcAltPercent(void);
 
-uint32_t
+int32_t
 calcAltAverage(void);
 
 void

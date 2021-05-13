@@ -86,21 +86,21 @@ initADC (void)
 
 }
 
-uint32_t
+int32_t
 calcAltAverage(void)
 {
     //Calculates and returns the rounded average altitude of the helicopter.
-    uint32_t averageAltitude;
+    int32_t averageAltitude;
     averageAltitude = (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
     return averageAltitude;
 
 }
 
-uint32_t
+int32_t
 calcAltPercent(void){
     // Calculates the altitude of the helicopter as a percentage relative to its maximum and minimum height
-    uint32_t percent;
-    percent = 100*(calcAltAverage()-voltageMaxHeight)/(voltageLanded - voltageMaxHeight)-100;
+    int32_t percent;
+    percent = 100- 100*(calcAltAverage() - voltageMaxHeight )/(voltageLanded - voltageMaxHeight);
     return percent;
 }
 

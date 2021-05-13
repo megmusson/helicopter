@@ -25,23 +25,17 @@ setPWMmain (uint32_t ui32Freq_1, uint32_t ui32Duty);
 void
 setPWMtail (uint32_t ui32Freq_1, uint32_t ui32Duty);
 
-uint32_t
-calcAltPWM(uint32_t sum );
+void
+calcAltPWM(int32_t altitude, uint32_t testFrequency);
 
-uint32_t
-calcYawPWM(void);
+void
+calcYawPWM(uint32_t testFrequency);
 
 void
 changeTargetYaw(int16_t degreesChange);
 
 void
 changeTargetAltitude(int16_t percentChange);
-
-uint32_t
-getTargetYawDeg(void);
-
-uint32_t
-getTargetAltPercent(void);
 
 void
 enablePWMs(void);

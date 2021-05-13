@@ -46,21 +46,27 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
+#define STABLE_MAIN_DC 35
+#define STABLE_TAIL_DC 20
+#define YAW_P_GAIN 0.3
+#define YAW_I_GAIN 0.5
 
-#define YAW_P_GAIN 5
-#define YAW_I_GAIN 5
-#define ALT_P_GAIN 5
-#define ALT_I_GAIN 5
+#define ALT_P_GAIN 0
+#define ALT_I_GAIN 0
 
-#define YAW_TARGET_CHANGE_DEG 15
+
 #define YAW_EDGES 448
 #define ROTATION_DEG 360
-#define TIME_CONSTANT 0.005
+
+
+extern int yaw;
+int32_t totalAltDC = 0;
+int32_t totalYawDC = 0;
 int32_t yawIntControl;
 int32_t altIntControl;
 
-uint32_t altitudeTarget =50; // As percentage of maximum height to minimum height
-int32_t yawTarget; //Degrees
+int32_t altitudeTarget =0; // As percentage of maximum height to minimum height
+int32_t yawTarget = 0; //Degrees
 
 //Variables from other files
 
@@ -81,14 +87,6 @@ resetPWMs(void){
 void
 initialisePWMs (void)
 {
-
-    //SysCtlPeripheralReset (PWM_MAIN_PERIPH_PWM);
-   // SysCtlPeripheralReset (PWM_TAIL_PERIPH_PWM);
-
-
-    //SysCtlPeripheralReset (PWM_MAIN_PERIPH_GPIO); // Used for PWM output
-   // SysCtlPeripheralReset (PWM_TAIL_PERIPH_GPIO); // Used for PWM output TAIL
-
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
@@ -111,7 +109,6 @@ initialisePWMs (void)
 
     PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
     PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
-
 
     // Disable the output.  Repeat this call with 'true' to turn O/P on.
     PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, false);
@@ -150,32 +147,33 @@ setPWMtail (uint32_t ui32Freq_1, uint32_t ui32Duty)
 /********************************************************
  * Functions to calculate the pwm output using a PI controller
  ********************************************************/
-uint32_t
-calcAltPWM(uint32_t altitude){
+void
+calcAltPWM(int32_t altitude, uint32_t testFrequency){
     //Uses PI control and returns a PWM duty cycle value between 5 and 90 to power the Main motor to control
     //the altitude of the helicopter.
-    uint32_t altError;
-    uint32_t altPropControl;
+    int32_t altError;
+    int32_t altPropControl;
 
-    altError = altitude-altitudeTarget;
-    altPropControl = altError*YAW_P_GAIN;
-    altIntControl += altError*TIME_CONSTANT*YAW_I_GAIN;
+    altError = altitudeTarget-altitude;
+    altPropControl = STABLE_MAIN_DC + altError*ALT_P_GAIN;
+    altIntControl += altError*ALT_I_GAIN/testFrequency;
 
-    return (altPropControl+altIntControl);
+    totalAltDC = altPropControl+altIntControl;
 }
 
-uint32_t
-calcYawPWM(void){
+
+void
+calcYawPWM(uint32_t testFrequency){
     //Using PI control, returns a PWM duty cycle value between 5 and 90 to power the Main motor to control
     //the altitude of the helicopter.
-    uint32_t yawError;
-    uint32_t yawPropControl = 0;
+    int32_t yawError;
+    int32_t yawPropControl = 0;
 
-    yawError = giveMeTheYaw()-(yawTarget*YAW_EDGES/ROTATION_DEG);
-    yawPropControl = yawError*YAW_P_GAIN;
-    yawIntControl += yawError*TIME_CONSTANT*YAW_I_GAIN;
+    yawError = (yawTarget*YAW_EDGES/ROTATION_DEG)-yaw;
+    yawPropControl = STABLE_TAIL_DC + yawError*YAW_P_GAIN;
+    yawIntControl += yawError*YAW_I_GAIN/testFrequency;
 
-    return (yawPropControl+yawIntControl);
+    totalYawDC = yawPropControl+yawIntControl;
 }
 
 
@@ -184,6 +182,7 @@ changeTargetYaw(int16_t degreesChange)
 { //Changes the global variable yawTarget by positive or negative value degreesChange.
 
     yawTarget += degreesChange;
+
     if (yawTarget >= 181) {
             yawTarget -= 360;
         } else if (yawTarget <= -179) {
@@ -193,24 +192,14 @@ changeTargetYaw(int16_t degreesChange)
 void
 changeTargetAltitude(int16_t percentChange)
 { //Changes the global variable altitudeTarget by positive or negative percentChange, keeping target between 0 and 90%.
-    if ((altitudeTarget >= 90)&&(percentChange <= 0)){
-        altitudeTarget += percentChange;}
-    else if ((altitudeTarget <=0)&&(percentChange >=0)) {
+    if((altitudeTarget > 0)&&(percentChange<0)) {
+        altitudeTarget += percentChange;
+    } else if ((altitudeTarget <= 90)&&(percentChange >0)) {
         altitudeTarget += percentChange;
     }
 }
 
-uint32_t
-getTargetYawDeg(void)
-{
-    return yawTarget;
-}
 
-uint32_t
-getTargetAltPercent(void)
-{
-    return altitudeTarget;
-}
 
 void
 enablePWMs(void)

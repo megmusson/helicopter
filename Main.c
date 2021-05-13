@@ -75,6 +75,10 @@ void initSysTick(void);
 
 //static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
+extern uint32_t altitudeTarget;
+extern int yawTarget;
+extern int32_t totalAltDC;
+extern int32_t totalYawDC;
 /***********************************************************
  * ISR for the SysTick interrupt (used for button debouncing).
  ***********************************************************/
@@ -91,6 +95,11 @@ void SysTickIntHandler(void)
     updateButtons();
     ADCProcessorTrigger(ADC0_BASE, 3);
     readAltitude();
+    calcYawPWM(SAMPLE_RATE_HZ);
+    calcAltPWM(calcAltPercent(),SAMPLE_RATE_HZ);
+
+    setPWMtail (PWM_FREQ,totalYawDC);
+    setPWMmain (PWM_FREQ,totalAltDC);
     g_ulSampCnt++;
 
 }
@@ -128,8 +137,7 @@ void initDisplay(void)
 //
 //*****************************************************************************
 
-static uint32_t test_duty_cycle_main = 0;
-static uint32_t test_duty_cycle_tail = 0;
+
 static uint32_t ticks = 0;
 
 void
@@ -149,13 +157,13 @@ void displayStatus(void)
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
     char string[16];  // 16 characters across the display
-    usnprintf(string, sizeof(string), "Main DC = [%2d]\n\r", test_duty_cycle_main);
+    usnprintf(string, sizeof(string), "Main DC = %2d\n\r",totalAltDC);
     OLEDStringDraw(string, 0, 0);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)){
         UARTSend(string);
     }
-    usnprintf(string, sizeof(string), "Tail DC = [%2d]\n\r", test_duty_cycle_tail);//
+    usnprintf(string, sizeof(string), "Tail DC = %2d\n\r", totalYawDC);//
     // Update line on display.
     OLEDStringDraw(string, 0, 1);
 
@@ -163,14 +171,14 @@ void displayStatus(void)
             UARTSend(string);
         }
 
-    usnprintf(string, sizeof(string), "Alt %%=%2d [%2d]\n", calcAltPercent(),getTargetAltPercent());
+    usnprintf(string, sizeof(string), "Alt %%=%2d [%2d]\n", calcAltPercent(),altitudeTarget);
     OLEDStringDraw(string, 0, 2);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
             UARTSend(string);
         }
 
-    usnprintf(string, sizeof(string), "Yaw=%3d [%3d]\n\r", calcDegrees(), getTargetYawDeg()); // calcDegrees()
+    usnprintf(string, sizeof(string), "Yaw=%3d [%3d]\n\r", calcDegrees(), yawTarget);
     OLEDStringDraw(string, 0, 3);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
@@ -189,6 +197,7 @@ initialiseUSB_UART (void)
     //
     // Enable GPIO port A which is used for UART0 pins.
     //
+
     SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
     SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
     //
@@ -213,15 +222,18 @@ int main(void)
     SysCtlPeripheralReset(RIGHT_BUT_PERIPH);     // RIGHT button GPIO
     resetPWMs();
 
-    initClock();
+
     initButtons();
-    initADC();
     initDisplay();
+
+
+    initClock();
+
+    initADC();
 
     initYawGPIO();
     initialisePWMs ();
     initialiseUSB_UART ();
-
 
     enablePWMs();
 
@@ -238,41 +250,25 @@ int main(void)
         updateButtons();
 
         if (checkButton(UP) == PUSHED)
-        {
+            {
             //Increase Target Altitude by 10%
-            //changeTargetAltitude(ALT_STEP_POS);
-            if(test_duty_cycle_main <= 90){
-            test_duty_cycle_main +=2;
-            setPWMmain(PWM_FREQ, test_duty_cycle_main);
+            changeTargetAltitude(ALT_STEP_POS);
             }
-        }
         if (checkButton(DOWN) == PUSHED)
-          {//Decrease Target Altitude by 10%
-            //changeTargetAltitude(ALT_STEP_NEG);
-            //setMinMaxAlt();
-            if(test_duty_cycle_main >= 2){
-                test_duty_cycle_main -=2;
-                setPWMmain(PWM_FREQ, test_duty_cycle_main);
-                }
+          {
+            //Decrease Target Altitude by 10%
+            changeTargetAltitude(ALT_STEP_NEG);
           }
 
         if (checkButton(LEFT) == PUSHED)
         {
             // Decrease yaw by 15 degrees
-            //changeTargetYaw(YAW_STEP_NEG);
-            if (test_duty_cycle_tail >=2){
-               test_duty_cycle_tail -= 2;
-               setPWMtail(PWM_FREQ,test_duty_cycle_tail);
-            }
+            changeTargetYaw(YAW_STEP_NEG);;
         }
         if (checkButton(RIGHT) == PUSHED)
         {
-            // Decrease yaw by 15 degrees
-            //(YAW_STEP_POS);
-            if (test_duty_cycle_tail <=90){
-                test_duty_cycle_tail += 2;
-                setPWMtail(PWM_FREQ,test_duty_cycle_tail);
-            }
+            // Increase yaw by 15 degrees
+            changeTargetYaw(YAW_STEP_POS);
         }
 
         displayStatus();

@@ -35,8 +35,7 @@ initYawGPIO (void);
 int32_t
 calcDegrees(void);
 
-int32_t
-giveMeTheYaw(void); //gives the yaw because i can't figure out how else to do this lmao
+
 
 
 #endif /* YAW_H_ */

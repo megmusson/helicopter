@@ -23,7 +23,7 @@
 #define YAW_EDGES 448
 #define ROTATION_DEG 360
 
-static int yaw;
+int yaw;
 
 uint8_t yInRead = 0;
 int8_t yawChangeTable[16] = { 0, -1, 1, 0,
@@ -86,7 +86,6 @@ initYawGPIO (void)
 
     GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
 
-
     GPIOIntRegister(GPIO_PORTB_BASE, GPIOIntHandler);
 
     GPIOIntTypeSet(GPIO_PORTB_BASE,PHASE_A | PHASE_B, GPIO_BOTH_EDGES);
@@ -105,10 +104,6 @@ calcDegrees (void)
     return degrees;
 }
 
-int32_t
-giveMeTheYaw(void)
-{
-    return(yaw);
-}
+
 
 
