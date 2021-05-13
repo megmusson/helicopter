@@ -14,7 +14,6 @@
 #include "../driverlib/sysctl.h"
 #include "Altitude.h"
 #include "Yaw.h"
-
 #include "PWMcontrol.h"
 // PWM  Initialisation configuration
 #define PWM_START_DUTY     0
@@ -46,13 +45,14 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
-#define STABLE_MAIN_DC 35
-#define STABLE_TAIL_DC 20
-#define YAW_P_GAIN 0.3
-#define YAW_I_GAIN 0.5
+#define STABLE_MAIN_DC 50
+#define STABLE_TAIL_DC 35
 
-#define ALT_P_GAIN 0
-#define ALT_I_GAIN 0
+#define YAW_P_GAIN 0.5
+#define YAW_I_GAIN 0.3
+
+#define ALT_P_GAIN 0.5
+#define ALT_I_GAIN 0.2
 
 
 #define YAW_EDGES 448
@@ -153,12 +153,20 @@ calcAltPWM(int32_t altitude, uint32_t testFrequency){
     //the altitude of the helicopter.
     int32_t altError;
     int32_t altPropControl;
+    int32_t tempTot;
 
     altError = altitudeTarget-altitude;
     altPropControl = STABLE_MAIN_DC + altError*ALT_P_GAIN;
     altIntControl += altError*ALT_I_GAIN/testFrequency;
+    tempTot = altPropControl+altIntControl;
 
-    totalAltDC = altPropControl+altIntControl;
+    if (tempTot > 95) {
+        totalAltDC = 95;
+    } else {
+        totalAltDC = tempTot;
+    }
+
+
 }
 
 
@@ -168,12 +176,19 @@ calcYawPWM(uint32_t testFrequency){
     //the altitude of the helicopter.
     int32_t yawError;
     int32_t yawPropControl = 0;
+    int32_t tempTot;
 
     yawError = (yawTarget*YAW_EDGES/ROTATION_DEG)-yaw;
     yawPropControl = STABLE_TAIL_DC + yawError*YAW_P_GAIN;
     yawIntControl += yawError*YAW_I_GAIN/testFrequency;
+     tempTot = yawPropControl+yawIntControl;
 
-    totalYawDC = yawPropControl+yawIntControl;
+    if (tempTot > 95) {// keep the max below 95
+        totalYawDC = 95;
+    } else {
+        totalYawDC = tempTot;
+    }
+
 }
 
 
@@ -188,6 +203,8 @@ changeTargetYaw(int16_t degreesChange)
         } else if (yawTarget <= -179) {
             yawTarget += 360;
         }
+    //yawIntControl = 0; // Reset yaw integral control
+        ;
 }
 void
 changeTargetAltitude(int16_t percentChange)
@@ -197,6 +214,7 @@ changeTargetAltitude(int16_t percentChange)
     } else if ((altitudeTarget <= 90)&&(percentChange >0)) {
         altitudeTarget += percentChange;
     }
+    //altIntControl = 0; //Reset integral control
 }
 
 
