@@ -45,13 +45,13 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
-#define STABLE_MAIN_DC 50
-#define STABLE_TAIL_DC 35
+#define STABLE_MAIN_DC 40
+#define STABLE_TAIL_DC 32
 
 #define YAW_P_GAIN 0.5
 #define YAW_I_GAIN 0.3
 
-#define ALT_P_GAIN 0.5
+#define ALT_P_GAIN 0.8
 #define ALT_I_GAIN 0.2
 
 
@@ -185,6 +185,8 @@ calcYawPWM(uint32_t testFrequency){
 
     if (tempTot > 95) {// keep the max below 95
         totalYawDC = 95;
+    } else if (tempTot < 0) {
+        totalYawDC = 0;
     } else {
         totalYawDC = tempTot;
     }
