@@ -17,8 +17,8 @@
 #define BUF_SIZE 8
 #define MAX_VOLT_BITS 1024
 //static int bufSize = BUF_SIZE;
-static int voltageLanded =0;
-static int voltageMaxHeight=0;
+static int voltageLanded = 0;
+static int voltageMaxHeight = 0;
 static int sum =0;
 //circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 

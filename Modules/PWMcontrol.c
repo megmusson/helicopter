@@ -200,11 +200,22 @@ changeTargetYaw(int16_t degreesChange)
 
     yawTarget += degreesChange;
 
+    //Old  code
     if (yawTarget >= 181) {
             yawTarget -= 360;
         } else if (yawTarget <= -179) {
             yawTarget += 360;
         }
+
+    // New code, to take the shortest path
+/*
+    if (yawTarget >= ((yaw +(YAW_EDGES/2))/YAW_EDGES) * ROTATION_DEG) {
+        yawTarget -= 360;
+    } else if (yawTarget < ((yaw + (YAW_EDGES/2))/YAW_EDGES) * ROTATION_DEG) {
+        yawTarget += 360;
+    }
+*/
+
     //yawIntControl = 0; // Reset yaw integral control
         ;
 }

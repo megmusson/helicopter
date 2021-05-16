@@ -274,6 +274,7 @@ int main(void)
 
     initButtons();
     initDisplay();
+
     initClock();
     initADC();
     initYawGPIO();
