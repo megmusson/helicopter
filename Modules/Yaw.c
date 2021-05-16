@@ -35,22 +35,7 @@ uint8_t yPrev = 0; //global variables to save previous bit states.
 
 
 
-/*
-void
-GPIOIntHandler(void)
-{
-    //get values from both sensors as well as their previous values
-    IntMasterDisable();
-    yInRead = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-    Value = yPrev<<2 | yInRead;
-    //use table to determine whether add or subtract one to yaw
-    yaw = yaw + yawChangeTable[Value];
-    yPrev = yInRead;
-    GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
-    IntMasterEnable();
 
-}
-*/
 void
 GPIOIntHandler(void)
 {
@@ -69,28 +54,20 @@ GPIOIntHandler(void)
     }
 }
 
-/*
- * uint8_t Value;
-    uint8_t yInRead;yInRead = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-Value = yPrev<<2 | yInRead;
-//use table to determine whether add or subtract one to yaw
-yaw = yaw + yawChangeTable[Value];
-yPrev = yInRead;
-GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
-*/
 
 void
 initYawGPIO (void)
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-
     GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
 
     GPIOIntRegister(GPIO_PORTB_BASE, GPIOIntHandler);
-
     GPIOIntTypeSet(GPIO_PORTB_BASE,PHASE_A | PHASE_B, GPIO_BOTH_EDGES);
     GPIOIntEnable(GPIO_PORTB_BASE, PHASE_A | PHASE_B);//enable the interrupt on pin 0 and pin 1 on port B
 
+    // Now for the independent yaw zero
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+    GPIOPinTypeGPIOInput(GPIO_PORTC_BASE, GPIO_PIN_4);
 }
 
 int32_t

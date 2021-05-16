@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/pin_map.h" //Needed for pin configure
@@ -79,9 +80,10 @@ extern uint32_t altitudeTarget;
 extern int yawTarget;
 extern int32_t totalAltDC;
 extern int32_t totalYawDC;
-/***********************************************************
- * ISR for the SysTick interrupt (used for button debouncing).
- ***********************************************************/
+extern int yaw;
+
+bool flying = 0;
+
 //*****************************************************************************
 //
 // The interrupt handler for the for SysTick interrupt.
@@ -95,11 +97,14 @@ void SysTickIntHandler(void)
     updateButtons();
     ADCProcessorTrigger(ADC0_BASE, 3);
     readAltitude();
-    calcYawPWM(SAMPLE_RATE_HZ);
-    calcAltPWM(calcAltPercent(),SAMPLE_RATE_HZ);
 
-    setPWMtail (PWM_FREQ,totalYawDC);
-    setPWMmain (PWM_FREQ,totalAltDC);
+    if (flying) {
+        calcYawPWM(SAMPLE_RATE_HZ);
+        calcAltPWM(calcAltPercent(),SAMPLE_RATE_HZ);
+
+        setPWMtail (PWM_FREQ,totalYawDC);
+        setPWMmain (PWM_FREQ,totalAltDC);
+    }
     g_ulSampCnt++;
 
 }
@@ -187,10 +192,21 @@ void displayStatus(void)
         }
 }
 
-//**********************************************************************
-// Transmit a string via UART0
-//**********************************************************************
 
+void
+locateYawStart(void){
+    //Maintains a slow steady tail rotor PWM until the signal is recieved, then sets that yaw position to zero.
+    int searchTailDC = 40;
+    int searchMainDC = 0;
+
+    while(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)){
+        setPWMtail (PWM_FREQ,searchTailDC);
+        setPWMmain (PWM_FREQ,searchMainDC);
+    }
+    yaw = 0;
+    yawTarget = 0;
+    flying = 1;
+}
 void
 initialiseUSB_UART (void)
 {
@@ -214,8 +230,41 @@ initialiseUSB_UART (void)
     UARTEnable(UART_USB_BASE);
 }
 
+void
+initSwitch(void) {
+    // Initialise the switch for setting landing modes
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+        GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
+}
+
+void
+checkAndChangeTargets(void){
+            if (checkButton(UP) == PUSHED)
+                {
+                //Increase Target Altitude by 10%
+                changeTargetAltitude(ALT_STEP_POS);
+                }
+            if (checkButton(DOWN) == PUSHED)
+              {
+                //Decrease Target Altitude by 10%
+                changeTargetAltitude(ALT_STEP_NEG);
+              }
+
+            if (checkButton(LEFT) == PUSHED)
+            {
+                // Decrease yaw by 15 degrees
+                changeTargetYaw(YAW_STEP_NEG);;
+            }
+            if (checkButton(RIGHT) == PUSHED)
+            {
+                // Increase yaw by 15 degrees
+                changeTargetYaw(YAW_STEP_POS);
+            }
+}
 int main(void)
 {
+    int yawErrorTolerance = 5;
+    int altErrorTolerance = 5;
     SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);      // LEFT button GPIO
@@ -225,13 +274,11 @@ int main(void)
 
     initButtons();
     initDisplay();
-
-
     initClock();
-
     initADC();
-
     initYawGPIO();
+    initSwitch();
+
     initialisePWMs ();
     initialiseUSB_UART ();
 
@@ -244,35 +291,38 @@ int main(void)
 
     setMinMaxAlt();
 
+
     while (1)
     {
         // Main loop
         updateButtons();
 
-        if (checkButton(UP) == PUSHED)
-            {
-            //Increase Target Altitude by 10%
-            changeTargetAltitude(ALT_STEP_POS);
+        //Check if switch is on or off
+        if ((!flying)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7))) {
+            locateYawStart();
+            flying = 1;
             }
-        if (checkButton(DOWN) == PUSHED)
-          {
-            //Decrease Target Altitude by 10%
-            changeTargetAltitude(ALT_STEP_NEG);
-          }
 
-        if (checkButton(LEFT) == PUSHED)
-        {
-            // Decrease yaw by 15 degrees
-            changeTargetYaw(YAW_STEP_NEG);;
+
+        if (flying){
+        checkAndChangeTargets();
         }
-        if (checkButton(RIGHT) == PUSHED)
-        {
-            // Increase yaw by 15 degrees
-            changeTargetYaw(YAW_STEP_POS);
+
+
+        if ((flying) && (!(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7)))) {
+            yawTarget = 0;
+            altitudeTarget = 0;
+            while((yaw > abs(yawErrorTolerance))&&(calcAltAverage() > abs(altErrorTolerance))) {
+            }
+            setPWMtail (PWM_FREQ,0);
+            setPWMmain (PWM_FREQ,0);
+            flying = 0;
         }
+
+
+
 
         displayStatus();
-
         SysCtlDelay (SysCtlClockGet() / DISPLAY_HZ);  // Update display
         ticks += 1;
     }

@@ -48,10 +48,10 @@
 #define STABLE_MAIN_DC 40
 #define STABLE_TAIL_DC 32
 
-#define YAW_P_GAIN 0.5
-#define YAW_I_GAIN 0.3
+#define YAW_P_GAIN 0.6
+#define YAW_I_GAIN 0.5
 
-#define ALT_P_GAIN 0.8
+#define ALT_P_GAIN 2
 #define ALT_I_GAIN 0.2
 
 
@@ -181,7 +181,7 @@ calcYawPWM(uint32_t testFrequency){
     yawError = (yawTarget*YAW_EDGES/ROTATION_DEG)-yaw;
     yawPropControl = STABLE_TAIL_DC + yawError*YAW_P_GAIN;
     yawIntControl += yawError*YAW_I_GAIN/testFrequency;
-     tempTot = yawPropControl+yawIntControl;
+    tempTot = yawPropControl+yawIntControl;
 
     if (tempTot > 95) {// keep the max below 95
         totalYawDC = 95;
