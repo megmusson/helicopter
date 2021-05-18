@@ -185,7 +185,7 @@ calcYawPWM(uint32_t testFrequency){
     tempTot = yawPropControl+yawIntControl;
 
     if (tempTot > 95) {// keep the max below 95
-        totalYawDC = 95;
+        totalYawDC = 80;
     } else if (tempTot < 0) {
         totalYawDC = 0;
     } else {

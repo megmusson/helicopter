@@ -163,14 +163,14 @@ void displayStatus(void)
 {
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    char string[16];  // 16 characters across the display
+    char string[17];  // 16 characters across the display
     usnprintf(string, sizeof(string), "Main DC = %2d\n\r",totalAltDC);
     OLEDStringDraw(string, 0, 0);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)){
         UARTSend(string);
     }
-    usnprintf(string, sizeof(string), "Tail DC = %2d\n\r", totalYawDC);//
+    usnprintf(string, sizeof(string), "Tail DC = %2d  \n\r", totalYawDC);//
     // Update line on display.
     OLEDStringDraw(string, 0, 1);
 
@@ -178,7 +178,7 @@ void displayStatus(void)
             UARTSend(string);
         }
 
-    usnprintf(string, sizeof(string), "Alt %%=%2d [%2d]\n", calcAltPercent(),altitudeTarget);
+    usnprintf(string, sizeof(string), "Alt %%=%2d [%2d]  \n\r", calcAltPercent(),altitudeTarget);
     OLEDStringDraw(string, 0, 2);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
@@ -203,6 +203,7 @@ DisplayLowerSwitch(void){
         OLEDStringDraw(string, 0, 1);
         OLEDStringDraw(string, 0, 2);
         OLEDStringDraw("        ", 0, 3);
+        UARTSend(string);
 
 }
 
@@ -283,6 +284,7 @@ bool
 switchIsUp(void){
     return (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7));
 }
+
 int main(void)
 {
     bool usingEmulator = 0;
