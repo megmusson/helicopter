@@ -45,19 +45,18 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
-#define STABLE_MAIN_DC 40
+#define STABLE_MAIN_DC 50
 #define STABLE_TAIL_DC 40
 
-#define YAW_P_GAIN 0.8
-#define YAW_I_GAIN 0.5
+#define YAW_P_GAIN 1.2 //1.2
+#define YAW_I_GAIN 0.1 //0.1
 
-#define ALT_P_GAIN 1.2
-#define ALT_I_GAIN 0.4
+#define ALT_P_GAIN 1.75 //1.7
+#define ALT_I_GAIN 0.4 //0.4
 
 
 #define YAW_EDGES 448
 #define ROTATION_DEG 360
-
 
 extern int yaw;
 int32_t totalAltDC = 0;

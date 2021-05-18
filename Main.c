@@ -85,6 +85,7 @@ extern int yaw;
 bool flying = 0;
 bool yawReferenceSet = 0;
 
+
 //*****************************************************************************
 //
 // The interrupt handler for the for SysTick interrupt.
@@ -193,6 +194,18 @@ void displayStatus(void)
         }
 }
 
+void
+DisplayLowerSwitch(void){
+        char string[16];
+
+        usnprintf(string, sizeof(string), "Turn off switch");
+        OLEDStringDraw("        ", 0, 0);
+        OLEDStringDraw(string, 0, 1);
+        OLEDStringDraw(string, 0, 2);
+        OLEDStringDraw("        ", 0, 3);
+
+}
+
 
 void
 locateYawStart(void){
@@ -237,6 +250,8 @@ initSwitch(void) {
     // Initialise the switch for setting landing modes
         SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
         GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
+    //Initialise the soft reset button
+        GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_6); //Initialise soft reset button
 }
 
 void
@@ -263,10 +278,16 @@ checkAndChangeTargets(void){
                 changeTargetYaw(YAW_STEP_POS);
             }
 }
+
+bool
+switchIsUp(void){
+    return (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7));
+}
 int main(void)
 {
-    int yawErrorTolerance = 3;
-    int altErrorTolerance = 3;
+    bool usingEmulator = 0;
+    int yawErrorTolerance = 2;
+    int altErrorTolerance = 2;
     SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);      // LEFT button GPIO
@@ -280,7 +301,7 @@ int main(void)
     initClock();
     initADC();
     initYawGPIO();
-    initSwitch();
+    //initSwitch();
 
     initialisePWMs ();
     initialiseUSB_UART ();
@@ -294,6 +315,11 @@ int main(void)
 
     setMinMaxAlt();
 
+    while (switchIsUp()) {
+        DisplayLowerSwitch();
+
+    }
+
 
     while (1)
     {
@@ -306,26 +332,25 @@ int main(void)
                 locateYawStart();
             }
             flying = 1;
-            }
+        }
 
 
         if (flying){
         checkAndChangeTargets();
         }
-
-
-        if ((flying) && (!(GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7)))) {
+        if ((flying) && (!switchIsUp())) { // If switch requests landing
             yawTarget = 0;
             altitudeTarget = 0;
-            while((yaw > abs(yawErrorTolerance))&&(calcAltAverage() > abs(altErrorTolerance))) {
+            while((yaw > abs(yawErrorTolerance))&&(calcAltAverage() > abs(altErrorTolerance))) { //While not at zero points, keep goin
             }
             setPWMtail (PWM_FREQ,0);
             setPWMmain (PWM_FREQ,0);
             flying = 0;
         }
 
-
-
+        if ((!usingEmulator)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6))){
+            SysCtlReset();
+        }
 
         displayStatus();
         SysCtlDelay (SysCtlClockGet() / DISPLAY_HZ);  // Update display
