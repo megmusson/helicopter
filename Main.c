@@ -133,19 +133,7 @@ void initClock(void)
     SysTickEnable();
 }
 
-
-
-//*****************************************************************************
-//
-// Function to display the mean ADC value (10-bit value, note), yaw position and sample count.
-//
-//*****************************************************************************
-
-
 static uint32_t ticks = 0;
-
-
-
 
 
 void
@@ -218,6 +206,10 @@ switchIsUp(void){
     return (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7));
 }
 
+bool
+softResetPushed(void){
+    return (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6));
+}
 int main(void)
 {
     bool usingEmulator = 0;
@@ -282,8 +274,9 @@ int main(void)
             setPWMmain (PWM_FREQ,0);
             flying = 0;
         }
-
-        if ((!usingEmulator)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6))){
+        //(checkButton(LEFT) == PUSHED
+              //
+        if ((!usingEmulator)&& (softResetPushed())){
             SysCtlReset();
         }
 
