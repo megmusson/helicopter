@@ -4,12 +4,14 @@
 #include <stdbool.h>
 
 
+
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "driverlib/uart.h"
 
 #include "Modules/Display.h"
 #include "Modules/Altitude.h"
 #include "Modules/Yaw.h"
+
 
 
 
@@ -69,30 +71,19 @@ void displayStatus(bool flying)
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
     char string[16];  // 16 characters across the display
-    usnprintf(string, sizeof(string), "Main DC = %2d\n\r",totalAltDC);
+
+
+    usnprintf(string, sizeof(string), "Main[%2d] Tail [%2d] \n\r",totalAltDC, totalYawDC);
+
     OLEDStringDraw(string, 0, 0);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)){
         UARTSend(string);
     }
-    usnprintf(string, sizeof(string), "Tail DC = %2d\n\r", totalYawDC);//
-    // Update line on display.
-    OLEDStringDraw(string, 0, 1);
-
-    if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
-            UARTSend(string);
-        }
-
-    usnprintf(string, sizeof(string), "Alt%%=%2d [%2d]\n", calcAltPercent(),altitudeTarget);
-    OLEDStringDraw(string, 0, 2);
-
-    if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
-            UARTSend(string);
-        }
 
 
     usnprintf(string, sizeof(string), "Yaw =%3d [%3d]\n\r", calcDegrees(), yawTarget);
-            OLEDStringDraw(string, 0, 3);
+            OLEDStringDraw(string, 0, 1);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
             UARTSend(string);
@@ -103,10 +94,13 @@ void displayStatus(bool flying)
 
     if (flying) {
         usnprintf(string, sizeof(string), "Mode: Flying\n\r");
-        //OLEDStringDraw(string, 0, 3);
+
+        OLEDStringDraw(string, 0, 2);
     } else {
         usnprintf(string, sizeof(string), "Mode: Landed\n\r");
-        //OLEDStringDraw(string, 0, 3);
+
+        OLEDStringDraw(string, 0, 3);
+
     }
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
