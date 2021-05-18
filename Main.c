@@ -83,6 +83,7 @@ extern int32_t totalYawDC;
 extern int yaw;
 
 bool flying = 0;
+bool yawReferenceSet = 0;
 
 //*****************************************************************************
 //
@@ -206,6 +207,7 @@ locateYawStart(void){
     yaw = 0;
     yawTarget = 0;
     flying = 1;
+    yawReferenceSet = 1;
 }
 void
 initialiseUSB_UART (void)
@@ -300,7 +302,9 @@ int main(void)
 
         //Check if switch is on or off
         if ((!flying)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7))) {
-            locateYawStart();
+            if (!yawReferenceSet){
+                locateYawStart();
+            }
             flying = 1;
             }
 

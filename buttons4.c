@@ -41,6 +41,11 @@ void
 initButtons (void)
 {
 	int i;
+	// Initialise the switch for setting landing modes
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
+    //Initialise the soft reset button
+    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_6);
 
 	// UP button (active HIGH)
     SysCtlPeripheralEnable (UP_BUT_PERIPH);

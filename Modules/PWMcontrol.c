@@ -45,14 +45,14 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
-#define STABLE_MAIN_DC 45
+#define STABLE_MAIN_DC 40
 #define STABLE_TAIL_DC 40
 
-#define YAW_P_GAIN 0.6
+#define YAW_P_GAIN 0.8
 #define YAW_I_GAIN 0.5
 
-#define ALT_P_GAIN 2
-#define ALT_I_GAIN 0.5
+#define ALT_P_GAIN 1.2
+#define ALT_I_GAIN 0.4
 
 
 #define YAW_EDGES 448
@@ -162,6 +162,8 @@ calcAltPWM(int32_t altitude, uint32_t testFrequency){
 
     if (tempTot > 95) {
         totalAltDC = 95;
+    } else if (tempTot < 0){
+        totalAltDC = 0;
     } else {
         totalAltDC = tempTot;
     }
@@ -227,7 +229,7 @@ changeTargetAltitude(int16_t percentChange)
     } else if ((altitudeTarget <= 90)&&(percentChange >0)) {
         altitudeTarget += percentChange;
     }
-    //altIntControl = 0; //Reset integral control
+    altIntControl = 0; //Reset integral control
 }
 
 
