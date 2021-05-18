@@ -263,8 +263,8 @@ checkAndChangeTargets(void){
 }
 int main(void)
 {
-    int yawErrorTolerance = 5;
-    int altErrorTolerance = 5;
+    int yawErrorTolerance = 3;
+    int altErrorTolerance = 3;
     SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);      // LEFT button GPIO

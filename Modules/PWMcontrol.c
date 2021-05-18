@@ -45,14 +45,14 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
-#define STABLE_MAIN_DC 40
-#define STABLE_TAIL_DC 32
+#define STABLE_MAIN_DC 45
+#define STABLE_TAIL_DC 40
 
 #define YAW_P_GAIN 0.6
 #define YAW_I_GAIN 0.5
 
 #define ALT_P_GAIN 2
-#define ALT_I_GAIN 0.2
+#define ALT_I_GAIN 0.5
 
 
 #define YAW_EDGES 448

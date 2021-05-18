@@ -15,7 +15,7 @@
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "Modules/Altitude.h"
 #define BUF_SIZE 8
-#define MAX_VOLT_BITS 1024
+#define MAX_VOLT_BITS 1300
 //static int bufSize = BUF_SIZE;
 static int voltageLanded = 0;
 static int voltageMaxHeight = 0;
