@@ -160,10 +160,12 @@ locateYawStart(void){
         setPWMtail (PWM_FREQ,searchTailDC);
         setPWMmain (PWM_FREQ,searchMainDC);
     }
+    setMinMaxAlt();
     yaw = 0;
     yawTarget = 0;
     flying = 1;
     yawReferenceSet = 1;
+
 }
 
 
@@ -276,7 +278,7 @@ int main(void)
         }
         //(checkButton(LEFT) == PUSHED
               //
-        if ((!usingEmulator)&& (softResetPushed())){
+        if ((usingEmulator == 0)&& (checkButton(UP) == PUSHED)){//softResetPushed()
             SysCtlReset();
         }
 

@@ -68,13 +68,13 @@ void displayStatus(bool flying)
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
     char string[16];  // 16 characters across the display
-    usnprintf(string, sizeof(string), "Main DC = %2d\n\r",totalAltDC);
-    OLEDStringDraw(string, 0, 0);
+    //usnprintf(string, sizeof(string), "Main DC = %2d\n\r",totalAltDC);
+    //OLEDStringDraw(string, 0, 0);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)){
         UARTSend(string);
     }
-    usnprintf(string, sizeof(string), "Tail DC = %2d\n\r", totalYawDC);//
+    usnprintf(string, sizeof(string), "Main=%2d Tail=%2d\n\r",totalAltDC, totalYawDC);//
     // Update line on display.
     OLEDStringDraw(string, 0, 1);
 
@@ -82,7 +82,7 @@ void displayStatus(bool flying)
             UARTSend(string);
         }
 
-    usnprintf(string, sizeof(string), "Alt%%=%2d [%2d]\n", calcAltPercent(),altitudeTarget);
+    usnprintf(string, sizeof(string), "Alt%%=%3d [%2d]\n   ", calcAltPercent(),altitudeTarget);
     OLEDStringDraw(string, 0, 2);
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
@@ -102,10 +102,10 @@ void displayStatus(bool flying)
 
     if (flying) {
         usnprintf(string, sizeof(string), "Mode: Flying\n\r");
-        //OLEDStringDraw(string, 0, 3);
+        OLEDStringDraw(string, 0, 0);
     } else {
         usnprintf(string, sizeof(string), "Mode: Landed\n\r");
-        //OLEDStringDraw(string, 0, 3);
+        OLEDStringDraw(string, 0, 0);
     }
 
     if (ticks >= (DISPLAY_HZ/SLOW_TICKRATE_HZ)) {
