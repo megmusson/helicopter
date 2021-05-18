@@ -46,12 +46,12 @@
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
 #define STABLE_MAIN_DC 40
-#define STABLE_TAIL_DC 32
+#define STABLE_TAIL_DC 20
 
 #define YAW_P_GAIN 0.6
 #define YAW_I_GAIN 0.5
 
-#define ALT_P_GAIN 2
+#define ALT_P_GAIN 0.8
 #define ALT_I_GAIN 0.2
 
 
@@ -59,7 +59,7 @@
 #define ROTATION_DEG 360
 
 
-extern int yaw;
+
 int32_t totalAltDC = 0;
 int32_t totalYawDC = 0;
 int32_t yawIntControl;
@@ -200,33 +200,32 @@ changeTargetYaw(int16_t degreesChange)
 
     yawTarget += degreesChange;
 
-    //Old  code
     if (yawTarget >= 181) {
             yawTarget -= 360;
         } else if (yawTarget <= -179) {
             yawTarget += 360;
-        }
-
-    // New code, to take the shortest path
-/*
-    if (yawTarget >= ((yaw +(YAW_EDGES/2))/YAW_EDGES) * ROTATION_DEG) {
-        yawTarget -= 360;
-    } else if (yawTarget < ((yaw + (YAW_EDGES/2))/YAW_EDGES) * ROTATION_DEG) {
-        yawTarget += 360;
     }
-*/
 
-    //yawIntControl = 0; // Reset yaw integral control
-        ;
 }
 void
 changeTargetAltitude(int16_t percentChange)
 { //Changes the global variable altitudeTarget by positive or negative percentChange, keeping target between 0 and 90%.
+    /*// What?
     if((altitudeTarget > 0)&&(percentChange<0)) {
         altitudeTarget += percentChange;
     } else if ((altitudeTarget <= 90)&&(percentChange >0)) {
         altitudeTarget += percentChange;
     }
+    */
+
+    altitudeTarget += percentChange;
+
+    if (altitudeTarget < 0) {
+        altitudeTarget = 0;
+    } else if (altitudeTarget > 100) {
+        altitudeTarget = 100;
+    }
+
     //altIntControl = 0; //Reset integral control
 }
 
