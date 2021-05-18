@@ -8,6 +8,8 @@
 #ifndef PWMCONTROL_H_
 #define PWMCONTROL_H_
 
+extern int yaw;
+
 /*********************************************************
  * initialisePWMS
  * M0PWM7 (J4-05, PC5) is used for the main rotor motor

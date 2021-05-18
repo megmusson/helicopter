@@ -23,7 +23,7 @@
 #define YAW_EDGES 448
 #define ROTATION_DEG 360
 
-int yaw;
+
 
 uint8_t yInRead = 0;
 int8_t yawChangeTable[16] = { 0, -1, 1, 0,
