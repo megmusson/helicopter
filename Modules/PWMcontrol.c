@@ -46,12 +46,12 @@
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
 #define STABLE_MAIN_DC 40
-#define STABLE_TAIL_DC 20
+#define STABLE_TAIL_DC 40
 
-#define YAW_P_GAIN 0.6
-#define YAW_I_GAIN 0.5
+#define YAW_P_GAIN 1
+#define YAW_I_GAIN 0.3
 
-#define ALT_P_GAIN 0.8
+#define ALT_P_GAIN 1
 #define ALT_I_GAIN 0.2
 
 

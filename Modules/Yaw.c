@@ -12,8 +12,8 @@
 #include "driverlib/interrupt.h"
 #include "stdlib.h"
 #include "inc/hw_ints.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
-#include "Modules/Yaw.h"
+#include "../OrbitOLED/OrbitOLEDInterface.h"
+#include "Yaw.h"
 
 
 //YAW MEASUREMENT DEFINITIONS AND GLOBAL VARIABLES

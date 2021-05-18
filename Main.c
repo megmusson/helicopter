@@ -60,7 +60,7 @@
 
 
 #define STEADY_DESCEND_PWM 30
-#define SEARCH_TAIL_DC 30
+#define SEARCH_TAIL_DC 40
 #define SEARCH_MAIN_DC 0
 
 /*******************************************
@@ -84,6 +84,7 @@ extern int yaw;
 
 bool flying = 0;
 bool landing = 0;
+bool landed = 0;
 
 //*****************************************************************************
 //
@@ -135,7 +136,7 @@ void initClock(void)
 void
 locateYawStart(void){
     //Maintains a slow steady tail rotor PWM until the signal is recieved, then sets that yaw position to zero.
-    while(!(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4))){
+    while((GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4))){
         setPWMtail (PWM_FREQ, SEARCH_TAIL_DC);
         setPWMmain (PWM_FREQ, SEARCH_MAIN_DC);
     }
@@ -210,6 +211,7 @@ int main(void)
 
 
     setMinMaxAlt();
+    landed = 1;
 
 
     while (1)
@@ -218,11 +220,12 @@ int main(void)
         updateButtons();
 
         //Check if switch is on or off
-        if ((!flying)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7))) {
+        if ((landed)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7))) {
             // Start FLYING
             altitudeTarget = 0;
             locateYawStart();
             flying = 1;
+            landed = 0;
         }
 
 
@@ -240,6 +243,7 @@ int main(void)
         if (landing) {
             yawTarget = 0;
 
+
             while((yaw > abs(yawErrorTolerance))) {
                 // Wait for the heli to point forwards before landing.
             }
@@ -248,14 +252,14 @@ int main(void)
             setPWMmain(PWM_FREQ, STEADY_DESCEND_PWM);
 
             while ((calcAltAverage() > abs(altErrorTolerance))) {
+
             }
 
             flying = 0;
             setPWMtail (PWM_FREQ, 0);
             setPWMmain (PWM_FREQ, 0);
+            landed = 1;
             //The end.
-
-
         }
 /*
             while((yaw > abs(yawErrorTolerance))&&(calcAltAverage() > abs(altErrorTolerance))) {

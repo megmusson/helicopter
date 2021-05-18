@@ -10,10 +10,10 @@
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/interrupt.h"
-#include "circBufT.h"
+#include "../circBufT.h"
 #include "stdlib.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
-#include "Modules/Altitude.h"
+#include "../OrbitOLED/OrbitOLEDInterface.h"
+#include "Altitude.h"
 #define BUF_SIZE 8
 #define MAX_VOLT_BITS 1024
 //static int bufSize = BUF_SIZE;
