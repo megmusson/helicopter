@@ -100,7 +100,7 @@ int32_t
 calcAltPercent(void){
     // Calculates the altitude of the helicopter as a percentage relative to its maximum and minimum height
     int32_t percent;
-    percent = 100- 100*(calcAltAverage() - voltageMaxHeight )/(voltageLanded - voltageMaxHeight);
+    percent = 100 - 100*(calcAltAverage() - voltageMaxHeight )/(voltageLanded - voltageMaxHeight);
     return percent;
 }
 

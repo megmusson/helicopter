@@ -75,6 +75,12 @@ void initSysTick(void);
 #define UART_USB_GPIO_PIN_TX    GPIO_PIN_1
 #define UART_USB_GPIO_PINS      UART_USB_GPIO_PIN_RX | UART_USB_GPIO_PIN_TX
 
+#define SEARCH_TAIL_DC 40
+#define SEARCH_MAIN_DC 0
+
+
+
+
 //static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
 extern uint32_t altitudeTarget;
@@ -138,6 +144,7 @@ static uint32_t ticks = 0;
 
 void
 DisplayLowerSwitch(void){
+    // Display a message telling the user to turn the landing/flying switch back.
         char string[16];
 
         usnprintf(string, sizeof(string), "Turn off switch");
@@ -152,13 +159,11 @@ DisplayLowerSwitch(void){
 
 void
 locateYawStart(void){
-    //Maintains a slow steady tail rotor PWM until the signal is recieved, then sets that yaw position to zero.
-    int searchTailDC = 40;
-    int searchMainDC = 0;
+    //Maintains a slow steady tail rotor PWM until the signal is received that we are at 0, then sets that yaw position to zero.
 
     while(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)){
-        setPWMtail (PWM_FREQ,searchTailDC);
-        setPWMmain (PWM_FREQ,searchMainDC);
+        setPWMtail (PWM_FREQ, SEARCH_TAIL_DC);
+        setPWMmain (PWM_FREQ, SEARCH_MAIN_DC);
     }
     setMinMaxAlt();
     yaw = 0;
@@ -214,7 +219,8 @@ softResetPushed(void){
 }
 int main(void)
 {
-    bool usingEmulator = 0;
+    bool usingEmulator = 1; // Are we using the emulator, true or false?
+
     int yawErrorTolerance = 2;
     int altErrorTolerance = 2;
     SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
@@ -276,9 +282,10 @@ int main(void)
             setPWMmain (PWM_FREQ,0);
             flying = 0;
         }
-        //(checkButton(LEFT) == PUSHED
-              //
-        if ((usingEmulator == 0)&& (checkButton(UP) == PUSHED)){//softResetPushed()
+
+        if ((!usingEmulator)&& (checkButton(UP) == PUSHED)){ //softResetPushed()     Change this line when using emulator
+            SysCtlReset();
+        } else if ((usingEmulator) && softResetPushed()) {
             SysCtlReset();
         }
 

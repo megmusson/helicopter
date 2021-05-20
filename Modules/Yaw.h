@@ -12,19 +12,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define PHASE_A GPIO_INT_PIN_0
-#define PHASE_B GPIO_INT_PIN_1
+uint8_t lookupIndex;
 
-
-
-
-uint8_t Value;
-
-/*
-
-int8_t yawChangeTable[16];
-uint8_t yPrev; //global variables to save previous bit states.
-*/
 
 void
 GPIOIntHandler(void);

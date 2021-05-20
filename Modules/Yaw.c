@@ -26,11 +26,13 @@
 int yaw;
 
 uint8_t yInRead = 0;
+
+// Using a lookup table for quadrature decoding
 int8_t yawChangeTable[16] = { 0, -1, 1, 0,
                               1, 0, 0, -1,
                               -1, 0, 0,1,
                               0, 1, -1, 0};
-uint8_t yPrev = 0; //global variables to save previous bit states.
+uint8_t yPrev = 0;
 
 
 
@@ -41,16 +43,16 @@ GPIOIntHandler(void)
 {
 
     yInRead = GPIOPinRead(GPIO_PORTB_BASE, PHASE_A | PHASE_B);
-    Value = yPrev<<2 | yInRead;
+    lookupIndex = yPrev<<2 | yInRead;
     //use table to determine whether add or subtract one to yaw
-    yaw = yaw + yawChangeTable[Value];
+    yaw = yaw + yawChangeTable[lookupIndex];
     yPrev = yInRead & 0b0011;
     GPIOIntClear(GPIO_PORTB_BASE,PHASE_A | PHASE_B);
 
-    if (yaw >= 225) {
-        yaw -= 448;
-    } else if (yaw <= -224) {
-        yaw += 448;
+    if (yaw >= (YAW_EDGES/2 + 1)) {
+        yaw -= YAW_EDGES;
+    } else if (yaw <= (-1 * YAW_EDGES/2)) {
+        yaw += YAW_EDGES;
     }
 }
 

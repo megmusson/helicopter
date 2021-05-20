@@ -67,8 +67,6 @@ int32_t altIntControl;
 int32_t altitudeTarget =0; // As percentage of maximum height to minimum height
 int32_t yawTarget = 0; //Degrees
 
-//Variables from other files
-
 
 /*********************************************************
  * initialisePWMS
@@ -159,8 +157,8 @@ calcAltPWM(int32_t altitude, uint32_t testFrequency){
     altIntControl += altError*ALT_I_GAIN/testFrequency;
     tempTot = altPropControl+altIntControl;
 
-    if (tempTot > 95) {
-        totalAltDC = 95;
+    if (tempTot > PWM_DUTY_MAX) {
+        totalAltDC = PWM_DUTY_MAX;
     } else if (tempTot < 0){
         totalAltDC = 0;
     } else {
@@ -182,10 +180,10 @@ calcYawPWM(uint32_t testFrequency){
     yawError = (yawTarget*YAW_EDGES/ROTATION_DEG)-yaw;
     yawPropControl = STABLE_TAIL_DC + yawError*YAW_P_GAIN;
     yawIntControl += yawError*YAW_I_GAIN/testFrequency;
-    tempTot = yawPropControl+yawIntControl;
+    tempTot = yawPropControl+yawIntControl; // Total Yaw load
 
-    if (tempTot > 95) {// keep the max below 95
-        totalYawDC = 80;
+    if (tempTot > PWM_DUTY_MAX) {// keep the max below 95
+        totalYawDC = PWM_DUTY_MAX;
     } else if (tempTot < 0) {
         totalYawDC = 0;
     } else {
@@ -201,24 +199,13 @@ changeTargetYaw(int16_t degreesChange)
 
     yawTarget += degreesChange;
 
-    //Old  code
     if (yawTarget >= 181) {
             yawTarget -= 360;
         } else if (yawTarget <= -179) {
             yawTarget += 360;
         }
 
-    // New code, to take the shortest path
-/*
-    if (yawTarget >= ((yaw +(YAW_EDGES/2))/YAW_EDGES) * ROTATION_DEG) {
-        yawTarget -= 360;
-    } else if (yawTarget < ((yaw + (YAW_EDGES/2))/YAW_EDGES) * ROTATION_DEG) {
-        yawTarget += 360;
-    }
-*/
-
-    //yawIntControl = 0; // Reset yaw integral control
-        ;
+    yawIntControl = 0; // Reset yaw integral control
 }
 void
 changeTargetAltitude(int16_t percentChange)

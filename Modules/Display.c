@@ -13,7 +13,6 @@
 
 
 static uint32_t ticks = 0;
-//bool flying = 0;
 
 extern uint32_t altitudeTarget;
 extern int yawTarget;
