@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+// Variable to store lookup table index in
 uint8_t lookupIndex;
 
 
@@ -23,8 +24,6 @@ initYawGPIO (void);
 
 int32_t
 calcDegrees(void);
-
-
 
 
 #endif /* YAW_H_ */

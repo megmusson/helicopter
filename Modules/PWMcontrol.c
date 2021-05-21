@@ -1,3 +1,6 @@
+/* Module for all PWM and control related code.
+ *
+ */
 
 
 
@@ -6,7 +9,7 @@
 #include "stdlib.h"
 #include "../inc/hw_memmap.h"
 #include "../inc/hw_types.h"
-#include "../driverlib/pin_map.h" //Needed for pin configure
+#include "../driverlib/pin_map.h"
 #include "../driverlib/debug.h"
 #include "../driverlib/gpio.h"
 #include "../driverlib/pwm.h"
@@ -15,48 +18,50 @@
 #include "Altitude.h"
 #include "Yaw.h"
 #include "PWMcontrol.h"
+
 // PWM  Initialisation configuration
-#define PWM_START_DUTY     0
-#define PWM_FIXED_HZ  250
-#define PWM_DUTY_MAX    95
-#define PWM_DUTY_MIN    5
+#define PWM_START_DUTY                   0
+#define PWM_FIXED_HZ                    250
+#define PWM_DUTY_MAX                  95
+#define PWM_DUTY_MIN                    5
 #define PWM_DIVIDER_CODE   SYSCTL_PWMDIV_4
-#define PWM_DIVIDER        1
+#define PWM_DIVIDER                     1
+
 //  PWM Hardware Details M0PWM7 (gen 3)
 //  ---Main Rotor PWM: PC5, J4-05
-#define PWM_MAIN_BASE        PWM0_BASE
-#define PWM_MAIN_GEN         PWM_GEN_3
-#define PWM_MAIN_OUTNUM      PWM_OUT_7
-#define PWM_MAIN_OUTBIT      PWM_OUT_7_BIT
-#define PWM_MAIN_PERIPH_PWM  SYSCTL_PERIPH_PWM0
-#define PWM_MAIN_PERIPH_GPIO SYSCTL_PERIPH_GPIOC
-#define PWM_MAIN_GPIO_BASE   GPIO_PORTC_BASE
-#define PWM_MAIN_GPIO_CONFIG GPIO_PC5_M0PWM7
-#define PWM_MAIN_GPIO_PIN    GPIO_PIN_5
+#define PWM_MAIN_BASE                   PWM0_BASE
+#define PWM_MAIN_GEN                    PWM_GEN_3
+#define PWM_MAIN_OUTNUM            PWM_OUT_7
+#define PWM_MAIN_OUTBIT                PWM_OUT_7_BIT
+#define PWM_MAIN_PERIPH_PWM        SYSCTL_PERIPH_PWM0
+#define PWM_MAIN_PERIPH_GPIO        SYSCTL_PERIPH_GPIOC
+#define PWM_MAIN_GPIO_BASE           GPIO_PORTC_BASE
+#define PWM_MAIN_GPIO_CONFIG       GPIO_PC5_M0PWM7
+#define PWM_MAIN_GPIO_PIN              GPIO_PIN_5
 
 //  ---Tail Rotor PWM:M1PWM5 (gen 2) PC5,
-#define PWM_TAIL_BASE        PWM1_BASE
-#define PWM_TAIL_GEN         PWM_GEN_2
-#define PWM_TAIL_OUTNUM      PWM_OUT_5
-#define PWM_TAIL_OUTBIT      PWM_OUT_5_BIT
-#define PWM_TAIL_PERIPH_PWM  SYSCTL_PERIPH_PWM1
-#define PWM_TAIL_PERIPH_GPIO SYSCTL_PERIPH_GPIOF
-#define PWM_TAIL_GPIO_BASE   GPIO_PORTF_BASE
-#define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
-#define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
+#define PWM_TAIL_BASE                   PWM1_BASE
+#define PWM_TAIL_GEN                    PWM_GEN_2
+#define PWM_TAIL_OUTNUM            PWM_OUT_5
+#define PWM_TAIL_OUTBIT              PWM_OUT_5_BIT
+#define PWM_TAIL_PERIPH_PWM      SYSCTL_PERIPH_PWM1
+#define PWM_TAIL_PERIPH_GPIO      SYSCTL_PERIPH_GPIOF
+#define PWM_TAIL_GPIO_BASE         GPIO_PORTF_BASE
+#define PWM_TAIL_GPIO_CONFIG     GPIO_PF1_M1PWM5
+#define PWM_TAIL_GPIO_PIN           GPIO_PIN_1
 
-#define STABLE_MAIN_DC 50
-#define STABLE_TAIL_DC 40
+#define STABLE_MAIN_DC                  50
+#define STABLE_TAIL_DC                  40
 
-#define YAW_P_GAIN 1.2 //1.2
-#define YAW_I_GAIN 0.1 //0.1
+#define YAW_P_GAIN                      1.2 //1.2
+#define YAW_I_GAIN                       0.1 //0.1
 
-#define ALT_P_GAIN 1.75 //1.7
-#define ALT_I_GAIN 0.4 //0.4
+#define ALT_P_GAIN                      1.75 //1.7
+#define ALT_I_GAIN                        0.4 //0.4
 
 
-#define YAW_EDGES 448
-#define ROTATION_DEG 360
+#define YAW_EDGES                      448
+#define ROTATION_DEG                360
 
 extern int yaw;
 int32_t totalAltDC = 0;
@@ -64,7 +69,7 @@ int32_t totalYawDC = 0;
 int32_t yawIntControl;
 int32_t altIntControl;
 
-int32_t altitudeTarget =0; // As percentage of maximum height to minimum height
+int32_t altitudeTarget = 0; // As percentage of maximum height to minimum height
 int32_t yawTarget = 0; //Degrees
 
 

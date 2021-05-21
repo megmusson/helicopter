@@ -13,9 +13,7 @@
 #include <stdbool.h>
 #include "../circBufT.h"
 
-
 circBuf_t g_inBuffer;
-
 
 void
 ADCIntHandler(void);
