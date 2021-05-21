@@ -15,6 +15,7 @@
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "Modules/Altitude.h"
 
+<<<<<<< HEAD
 #define BUF_SIZE                      8
 #define MAX_VOLT_BITS           1300
 
@@ -24,6 +25,14 @@ static int voltageLanded = 0;
 static int voltageMaxHeight = 0;
 static int sum = 0;
 
+=======
+// Defines and initialise variables
+#define BUF_SIZE 8
+#define MAX_VOLT_BITS 1300
+static int voltageLanded = 0;
+static int voltageMaxHeight = 0;
+static int sum =0;
+>>>>>>> 7b6e8cbb1ef73e3e6d928ad91265bddc35a14c55
 
 //*****************************************************************************
 //
@@ -35,8 +44,13 @@ void
 ADCIntHandler(void)
 {
     uint32_t ulValue;
+<<<<<<< HEAD
 
     // Get the single sample from ADC0.  ADC_BASE is defined in
+=======
+    //
+    // Get the single sample from ADC0. ADC_BASE is defined in
+>>>>>>> 7b6e8cbb1ef73e3e6d928ad91265bddc35a14c55
     // inc/hw_memmap.h
     ADCSequenceDataGet(ADC0_BASE, 3, &ulValue);
     //
@@ -45,7 +59,6 @@ ADCIntHandler(void)
     //
     // Clean up, clearing the interrupt
     ADCIntClear(ADC0_BASE, 3);
-
 }
 
 void
@@ -54,12 +67,16 @@ initADC (void)
     //
     // The ADC0 peripheral must be enabled for configuration and use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-
+    //
     // Enable sample sequence 3 with a processor signal trigger.  Sequence 3
     // will do a single sample when the processor sends a signal to start the
     // conversion.
+<<<<<<< HEAD
     ADCSequenceConfigure(ADC0_BASE, ADC_SEQUENCE, ADC_TRIGGER_PROCESSOR, 0);
 
+=======
+    ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
+>>>>>>> 7b6e8cbb1ef73e3e6d928ad91265bddc35a14c55
     //
     // Configure step 0 on sequence 3.  Sample channel 0 (ADC_CTL_CH0) in
     // single-ended mode (default) and configure the interrupt flag
@@ -71,9 +88,9 @@ initADC (void)
     // on the ADC sequences and steps, refer to the LM3S1968 datasheet
     ADCSequenceStepConfigure(ADC0_BASE, ADC_SEQUENCE, 0, ADC_CTL_CH9 | ADC_CTL_IE | // CHANGE HERE FOR LAB 9 or 0+++++++++++++++++++++++++++++++++++++++
                              ADC_CTL_END);
-
     //
     // Since sample sequence 3 is now configured, it must be enabled.
+
     ADCSequenceEnable(ADC0_BASE, ADC_SEQUENCE);
 
     //
@@ -84,9 +101,11 @@ initADC (void)
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
     ADCIntEnable(ADC0_BASE, ADC_SEQUENCE);
 
+
     initCircBuf(&g_inBuffer, BUF_SIZE);
 
 }
+
 
 int32_t
 calcAltAverage(void) {
@@ -103,12 +122,14 @@ calcAltPercent(void){
 
 void
 setMinMaxAlt(void) {
+    //Sets the maximum and minimum voltage value for altitude  
     voltageLanded = readCircBuf(&g_inBuffer);
     voltageMaxHeight = voltageLanded - MAX_VOLT_BITS;
 }
 
 void
 readAltitude(void) {
+    //Sums all the values in buffer to determine average altitude over BUF_SIZE samples
     sum = 0;
     int i;
     for (i = 0; i < BUF_SIZE; i++)
