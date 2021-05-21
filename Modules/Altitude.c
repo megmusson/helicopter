@@ -15,24 +15,13 @@
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "Modules/Altitude.h"
 
-<<<<<<< HEAD
-#define BUF_SIZE                      8
-#define MAX_VOLT_BITS           1300
-
-#define ADC_SEQUENCE            3
-
-static int voltageLanded = 0;
-static int voltageMaxHeight = 0;
-static int sum = 0;
-
-=======
 // Defines and initialise variables
 #define BUF_SIZE 8
 #define MAX_VOLT_BITS 1300
+#define ADC_SEQUENCE 3
 static int voltageLanded = 0;
 static int voltageMaxHeight = 0;
 static int sum =0;
->>>>>>> 7b6e8cbb1ef73e3e6d928ad91265bddc35a14c55
 
 //*****************************************************************************
 //
@@ -44,21 +33,16 @@ void
 ADCIntHandler(void)
 {
     uint32_t ulValue;
-<<<<<<< HEAD
 
     // Get the single sample from ADC0.  ADC_BASE is defined in
-=======
-    //
-    // Get the single sample from ADC0. ADC_BASE is defined in
->>>>>>> 7b6e8cbb1ef73e3e6d928ad91265bddc35a14c55
     // inc/hw_memmap.h
-    ADCSequenceDataGet(ADC0_BASE, 3, &ulValue);
+    ADCSequenceDataGet(ADC0_BASE, ADC_SEQUENCE, &ulValue);
     //
     // Place it in the circular buffer (advancing write index)
     writeCircBuf (&g_inBuffer, ulValue);
     //
     // Clean up, clearing the interrupt
-    ADCIntClear(ADC0_BASE, 3);
+    ADCIntClear(ADC0_BASE, ADC_SEQUENCE);
 }
 
 void
@@ -71,12 +55,8 @@ initADC (void)
     // Enable sample sequence 3 with a processor signal trigger.  Sequence 3
     // will do a single sample when the processor sends a signal to start the
     // conversion.
-<<<<<<< HEAD
-    ADCSequenceConfigure(ADC0_BASE, ADC_SEQUENCE, ADC_TRIGGER_PROCESSOR, 0);
 
-=======
-    ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
->>>>>>> 7b6e8cbb1ef73e3e6d928ad91265bddc35a14c55
+    ADCSequenceConfigure(ADC0_BASE, ADC_SEQUENCE, ADC_TRIGGER_PROCESSOR, 0);
     //
     // Configure step 0 on sequence 3.  Sample channel 0 (ADC_CTL_CH0) in
     // single-ended mode (default) and configure the interrupt flag
