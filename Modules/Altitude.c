@@ -21,7 +21,7 @@
 #define ADC_SEQUENCE 3
 static int voltageLanded = 0;
 static int voltageMaxHeight = 0;
-static int sum =0;
+static int sum = 0;
 
 //*****************************************************************************
 //
