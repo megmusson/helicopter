@@ -92,7 +92,6 @@ initADC (void)
     // Since sample sequence 3 is now configured, it must be enabled.
 
     ADCSequenceEnable(ADC0_BASE, ADC_SEQUENCE);
-
     //
     // Register the interrupt handler
     ADCIntRegister (ADC0_BASE, ADC_SEQUENCE, ADCIntHandler);
