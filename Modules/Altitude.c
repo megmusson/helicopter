@@ -103,7 +103,7 @@ calcAltPercent(void){
     percent = 100 - 100*(calcAltAverage() - voltageMaxHeight )/(voltageLanded - voltageMaxHeight);
     return percent;
 }
-🥰🤩🤯😲😲😲😲😲
+
 void
 setMinMaxAlt(void)
 {
