@@ -75,13 +75,10 @@ void initSysTick(void);
 #define UART_USB_GPIO_PIN_TX    GPIO_PIN_1
 #define UART_USB_GPIO_PINS      UART_USB_GPIO_PIN_RX | UART_USB_GPIO_PIN_TX
 
+// Values for when the helicopter is locating the yaw reference point.
 #define SEARCH_TAIL_DC 40
 #define SEARCH_MAIN_DC 0
 
-
-
-
-//static circBuf_t g_inBuffer;        // Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;    // Counter for the interrupts
 extern uint32_t altitudeTarget;
 extern int yawTarget;
@@ -89,9 +86,12 @@ extern int32_t totalAltDC;
 extern int32_t totalYawDC;
 extern int yaw;
 
-bool flying = 0;
-bool yawReferenceSet = 0;
 
+bool flying = 0; // Start the helicopter not flying
+bool yawReferenceSet = 0; // Whether the yaw reference has been set or not
+// Error tolerances for determining whether the helicopter has reached the target balue
+#define YAW_ERR_TOL  2; //Degrees
+#define  ALT_ERR_TOL 2; //% height
 
 //*****************************************************************************
 //
@@ -115,7 +115,6 @@ void SysTickIntHandler(void)
         setPWMmain (PWM_FREQ,totalAltDC);
     }
     g_ulSampCnt++;
-
 }
 
 //*****************************************************************************
@@ -139,11 +138,11 @@ void initClock(void)
     SysTickEnable();
 }
 
-static uint32_t ticks = 0;
+
 
 
 void
-DisplayLowerSwitch(void){
+displayLowerSwitch(void){
     // Display a message telling the user to turn the landing/flying switch back.
         char string[16];
 
@@ -156,12 +155,19 @@ DisplayLowerSwitch(void){
 
 }
 
+bool
+yawReferenceNotRead(void) {
+    //Reads and returns the status of the yaw reference sensor.
+    //Active low means it returns 1 while the helicopter is NOT detecting the
+    //reference signal.
+    return (GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4));
+}
 
 void
 locateYawStart(void){
     //Maintains a slow steady tail rotor PWM until the signal is received that we are at 0, then sets that yaw position to zero.
 
-    while(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)){
+    while(yawReferenceNotRead()){
         setPWMtail (PWM_FREQ, SEARCH_TAIL_DC);
         setPWMmain (PWM_FREQ, SEARCH_MAIN_DC);
     }
@@ -179,22 +185,22 @@ initSwitch(void) {
     // Initialise the switch for setting landing modes
         SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
         GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
-    //Initialise the soft reset button
+    //  Initialise the soft reset button
         GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_6); //Initialise soft reset button
 }
 
 void
 checkAndChangeTargets(void){
             if (checkButton(UP) == PUSHED)
-                {
+            {
                 //Increase Target Altitude by 10%
                 changeTargetAltitude(ALT_STEP_POS);
-                }
+            }
             if (checkButton(DOWN) == PUSHED)
-              {
+            {
                 //Decrease Target Altitude by 10%
                 changeTargetAltitude(ALT_STEP_NEG);
-              }
+            }
 
             if (checkButton(LEFT) == PUSHED)
             {
@@ -210,34 +216,46 @@ checkAndChangeTargets(void){
 
 bool
 switchIsUp(void){
+    //Reads and returns the status of the right switch
     return (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7));
 }
 
 bool
 softResetPushed(void){
+    // Reads and returns the status of the soft reset button.
     return (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6));
 }
+
+
 int main(void)
 {
-    bool usingEmulator = 1; // Are we using the emulator, true or false?
+    /*
+     *  - Initialises peripherals and enables PWM signals
+     *  - Sets the minimum and maximum altitude voltage of the helicopter
+     *  - Refuses to enter the main while-loop until the flying switch is DOWN
+     *
+     *  In the main while-loop:
+     *  - Polls LEFT,RIGHT,UP,DOWN buttons to change yaw and altitude target, and moves towards them via sysTick interrupts
+     *  - Polls flying switch to see if the user has requested the helicopter to land, lands and set flying status to 0 if so.
+     *  - Polls soft reset switch and resets (softly) if button is pressed.
+     */
+    bool usingEmulator = 1; // Set to 1 to disable soft reset, the emulator does not like the soft reset GPIO pin.
+    int yawErrorTolerance = YAW_ERR_TOL;
+    int altErrorTolerance = ALT_ERR_TOL;
 
-    int yawErrorTolerance = 2;
-    int altErrorTolerance = 2;
     SysCtlPeripheralReset(UP_BUT_PERIPH);        // UP button GPIO
     SysCtlPeripheralReset(DOWN_BUT_PERIPH);      // DOWN button GPIO
     SysCtlPeripheralReset(LEFT_BUT_PERIPH);      // LEFT button GPIO
     SysCtlPeripheralReset(RIGHT_BUT_PERIPH);     // RIGHT button GPIO
-    resetPWMs();
 
+    resetPWMs();
 
     initButtons();
     initDisplay();
-
     initClock();
     initADC();
     initYawGPIO();
-    //initSwitch();
-
+    initSwitch();
     initialisePWMs ();
     initialiseUSB_UART ();
 
@@ -247,48 +265,51 @@ int main(void)
     IntMasterEnable();
     SysCtlDelay(SysCtlClockGet() / 6);
 
-
-    setMinMaxAlt();
+    setMinMaxAlt(); // Sets the current altitude to the zero position
 
     while (switchIsUp()) {
-        DisplayLowerSwitch();
-
+        // Refuses to start the program until the switch is in the down position
+        displayLowerSwitch();
     }
-
 
     while (1)
     {
-        // Main loop
         updateButtons();
 
-        //Check if switch is on or off
-        if ((!flying)&& (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7))) {
+        // If not flying and the switch is pulled up, start flying.
+        if ((!flying)&& (switchIsUp())) {
             if (!yawReferenceSet){
                 locateYawStart();
             }
             flying = 1;
         }
 
-
+        // Check for user yaw and altitude input
         if (flying){
         checkAndChangeTargets();
         }
-        if ((flying) && (!switchIsUp())) { // If switch requests landing
+
+        // If switch brought to down position while flying, land and set yaw to zero
+        if ((flying) && (!switchIsUp())) {
             yawTarget = 0;
             altitudeTarget = 0;
-            while((yaw > abs(yawErrorTolerance))&&(calcAltAverage() > abs(altErrorTolerance))) { //While not at zero points, keep goin
+
+            while((abs(yaw) > yawErrorTolerance) && (abs(calcAltAverage()) > altErrorTolerance))
+            { // Empty while-loop. Keep searching for the target until within the tolerances
             }
+            //Turn off rotors
             setPWMtail (PWM_FREQ,0);
             setPWMmain (PWM_FREQ,0);
             flying = 0;
         }
 
-        if ((!usingEmulator)&& (checkButton(UP) == PUSHED)){ //softResetPushed()     Change this line when using emulator
-            SysCtlReset();
-        } else if ((usingEmulator) && softResetPushed()) {
+
+        //Check whether a soft reset has been called.
+        if (!usingEmulator && softResetPushed()){ //softResetPushed()     Change this line when using emulator
             SysCtlReset();
         }
 
+        //Update display and add tick for UART transmission
         displayStatus(flying);
         SysCtlDelay (SysCtlClockGet() / DISPLAY_HZ);  // Update display
         ticks += 1;
